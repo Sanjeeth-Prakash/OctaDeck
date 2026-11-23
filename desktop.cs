@@ -58,13 +58,15 @@ internal sealed class RelayWindow : Form
     {
         if (!await Task.Run((Func<bool>)Ready))
         {
-            var command = new ProcessStartInfo(Path.Combine(home, @".venv\Scripts\python.exe"),
+            var embedded = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\runtime\python.exe"));
+            var python = File.Exists(embedded) ? embedded : Path.Combine(home, @".venv\Scripts\python.exe");
+            var command = new ProcessStartInfo(python,
                 "-m uvicorn app:app --host 127.0.0.1 --port 8520 --no-access-log");
             command.WorkingDirectory = source;
             command.UseShellExecute = false;
             command.CreateNoWindow = true;
             command.EnvironmentVariables["MODEL_RELAY_HOME"] = Path.Combine(home, "data");
-            command.EnvironmentVariables["TEMP"] = Path.Combine(home, "temp");
+            command.EnvironmentVariables["TEMP"] = Directory.CreateDirectory(Path.Combine(home, "temp")).FullName;
             command.EnvironmentVariables["TMP"] = command.EnvironmentVariables["TEMP"];
             command.EnvironmentVariables["PYTHONDONTWRITEBYTECODE"] = "1";
             server = Process.Start(command);
@@ -117,12 +119,13 @@ internal sealed class RelayWindow : Form
     [STAThread]
     private static void Main(string[] args)
     {
-        var home = Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar)).FullName;
-        if (args.Length != 1 || !File.Exists(Path.Combine(args[0], "app.py")))
+        if (args.Length < 1 || args.Length > 2 || !File.Exists(Path.Combine(args[0], "app.py")))
         {
             MessageBox.Show("Launch Model Relay using the installed shortcut.", "Model Relay");
             return;
         }
+        var home = args.Length == 2 ? args[1] :
+            Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar)).FullName;
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
         Application.Run(new RelayWindow(args[0], home));

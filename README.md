@@ -24,7 +24,7 @@ The playground server owns the assistant instructions and treats imported text a
 
 ### Hand off a playground session
 
-Run the separate **Agent Handoff** app on port 8512 with Ollama and Llama 3.1. In the Playground, make a request, select **Prepare handoff**, and review the proposed transcript. It includes recent turns, imported filenames, and recorded actions such as a syntax check, a discarded draft, or a save. Model Relay omits raw file attachments and generated replacements from the transcript. Review chat excerpts for pasted or quoted code before generating.
+Run the separate ThreadBrief app on port 8512 with Ollama and Llama 3.1. In the Playground, make a request, select **Prepare handoff**, and review the proposed transcript. It includes recent turns, imported filenames, and recorded actions such as a syntax check, a discarded draft, or a save. Model Relay omits raw file attachments and generated replacements from the transcript. Review chat excerpts for pasted or quoted code before generating. [ThreadBrief on GitHub](https://github.com/Sanjeeth-Prakash/ThreadBrief)
 
 **Generate brief** calls Agent Handoff over loopback. Its model selects evidence for the goal, verified state, next step, and constraints. Click **Download HANDOFF.md** after reviewing the editable brief. The next agent can open that file as context.
 
@@ -53,6 +53,12 @@ The product hypothesis to test is whether users can go from finding a local mode
 ![Local dashboard showing a real task and its model calls](docs/analytics.png)
 
 ## Windows desktop app
+
+Download **ModelRelay-Setup-x64.exe** from [GitHub Releases](https://github.com/Sanjeeth-Prakash/Model-Relay/releases). Choose an installation drive and open **Model Relay.lnk** from the installed folder. The setup bundles Python and the application files. Windows supplies WebView2 and .NET Framework. Local inference and model downloads use a separate Ollama installation. The release executable is unsigned.
+
+To build the same type of installer from source, run `python build-release.py --output <build-directory>` on x64 Windows with Python, pip and .NET Framework available.
+
+### Run a desktop build from source
 
 On x64 Windows with Python 3.11+, .NET Framework and Microsoft Edge WebView2 Runtime, run the installer from this project folder.
 
