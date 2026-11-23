@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Model Relay</title><style>
+@font-face { font-family: Inter; src: url("/assets/inter-latin.woff2") format("woff2"); font-weight: 400 700; font-display: swap; }
+:root {
+  color-scheme: dark;
+  --bg: #101112;
+  --nav: #151619;
+  --panel: #151719;
+  --field: #111216;
+  --line: #2c2f35;
+  --ink: #eceef3;
+  --muted: #a0a6b0;
+  --accent: #b7c6ff;
+  --accent-bg: #252b42;
+  --warn: #ffae9b;
+  font: 14px/1.55 Inter, "Segoe UI", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); }
+ .workspace { min-height: 100vh; }
+.topbar { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 27px; min-height: 54px; padding-inline: clamp(16px, 2.7vw, 42px); background: var(--nav); border-bottom: 1px solid var(--line); }
+.brand { display: flex; flex: none; gap: 8px; align-items: center; font-size: 14px; letter-spacing: -.03em; }
+nav { display: flex; gap: 20px; align-self: stretch; min-width: 0; overflow-x: auto; scrollbar-width: thin; }
+button, input, textarea, select { font: inherit; }
+button { border: 1px solid transparent; border-radius: 7px; padding: 6px 11px; min-height: 34px; color: #151926; background: var(--accent); cursor: pointer; font-weight: 600; white-space: nowrap; }
+button:hover { filter: brightness(1.1); }
+button:disabled { opacity: .45; cursor: default; }
+nav button { padding: 0 3px; min-height: 42px; background: transparent; color: var(--muted); border: 0; border-bottom: 2px solid transparent; border-radius: 0; font-size: 13px; }
+nav button:hover { color: var(--ink); }
+nav button[aria-current=true] { color: var(--ink); border-bottom-color: var(--accent); }
+.gateway { margin-left: auto; flex: none; display: flex; gap: 7px; align-items: center; font-size: 11px; color: var(--muted); }
+main { width: 100%; max-width: 1560px; margin-inline: auto; padding: 27px clamp(16px, 2.7vw, 42px) 56px; min-width: 0; }
+h1 { font-size: clamp(28px, 3vw, 36px); letter-spacing: -.055em; line-height: 1.1; margin: 0 0 10px; font-weight: 650; }
+h2 { font-size: 16px; letter-spacing: -.018em; margin: 0 0 12px; }
+p { color: var(--muted); margin: 0 0 16px; }
+small { color: var(--muted); }
+.panel, details, .stat { border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 17px; margin: 14px 0; min-width: 0; }
+.grid, .stats, .model-tools { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.model-tools .panel { margin: 0; }
+.model-tools { margin-top: 20px; align-items: start; }
+.stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.stat { margin: 0; }
+.stat strong { display: block; margin-top: 4px; font-size: 25px; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+.stat span { color: var(--muted); font-size: 13px; }
+label { display: block; font-weight: 600; }
+input, textarea, select { display: block; width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; margin: 5px 0 14px; background: var(--field); color: var(--ink); }
+input::placeholder, textarea::placeholder { color: #979b91; }
+textarea { min-height: 135px; resize: vertical; }
+textarea[readonly], #after { font-family: "IBM Plex Mono", Consolas, monospace; }
+input::file-selector-button { color: var(--ink); background: #30352c; border: 0; border-radius: 5px; padding: 4px 9px; margin-right: 10px; }
+.secondary { background: #22252b; border-color: var(--line); color: var(--ink); }
+.row, summary { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.row > :is(code,strong) { overflow-wrap: anywhere; }
+form .row > label { flex: 1; max-width: 290px; }
+form .row > label select { margin-bottom: 0; }
+form .row { align-items: end; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--field); border: 1px solid var(--line); padding: 13px; border-radius: 8px; font: 13px/1.65 "IBM Plex Mono", Consolas, monospace; }
+code { font-family: "IBM Plex Mono", Consolas, monospace; }
+a { color: var(--accent); overflow-wrap: anywhere; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 17px 0; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+#notice:empty, #job:empty, #analyticsCount:empty { display: none; }
+#notice { border: 1px solid #703d3f; border-radius: 8px; padding: 9px 12px; color: var(--warn); background: #322026; }
+#job { margin: 14px 0 0; }
+#catalog, #fileList { display: flex; flex-wrap: wrap; justify-content: start; gap: 8px; }
+#catalog button { font-size: 12px; min-height: 32px; padding: 5px 10px; }
+#searchResults .panel { padding: 10px 0; margin: 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; }
+#searchResults:not(:empty) { margin-top: 14px; }
+details { padding: 13px 17px; }
+summary { cursor: pointer; }
+summary strong::before { content: "›"; display: inline-block; margin-right: 9px; color: var(--accent); }
+details[open] summary strong::before { transform: rotate(90deg); }
+summary span { color: var(--muted); font-size: 13px; }
+details[open] summary { border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 10px; }
+.filters { display: flex; flex-wrap: wrap; gap: 14px; align-items: end; }
+.filters label { flex: 1 1 150px; }
+.filters select { margin-bottom: 0; }
+.table-wrap { overflow: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid var(--line); }
+th[scope=col] { white-space: nowrap; font-size: 12px; letter-spacing: .02em; color: var(--muted); font-weight: 550; background: #1c1e24; }
+tr:last-child td, tr:last-child th[scope=row] { border-bottom: 0; }
+.trace-failure { border-left: 3px solid var(--warn); }
+.inventory { padding: 0; margin-top: 12px; overflow: hidden; }
+.inventory th[scope=row] { font-weight: 600; overflow-wrap: anywhere; }
+.inventory td:last-child { text-align: right; }
+.inventory button { min-height: 32px; font-size: 12px; }
+.inventory-heading { margin: 26px 0 0; }
+.model-status { color: var(--accent); white-space: nowrap; }
+#voiceForm { margin-top: 16px; }
+#voiceAudio { width: 100%; margin-bottom: 12px; }
+
+@media (max-width: 720px) {
+  .topbar { flex-wrap: wrap; gap: 0 12px; padding-top: 9px; }
+  nav { width: 100%; order: 3; gap: 14px; }
+  .gateway code { display: none; }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid, .model-tools { grid-template-columns: 1fr; }
+}
+.health { display:block; font-weight:600; }
+.health[data-state=healthy] { color:var(--accent); }
+.health:is([data-state=rejected],[data-state=denied],[data-state=missing],[data-state=error]) { color:var(--warn); }
+.health[data-state=limited] { color:#f0cf8b; }
+.provider-actions { display:flex; gap:6px; justify-content:flex-end; }
+.provider-actions button { min-height:32px; }
+#providerList td :is(code,small) { display:block; overflow-wrap:anywhere; }
+#providerStatus { margin-top:12px; }
+#providerStatus:empty { display:none; }
+.range-label { min-width:100px; }
+.range-label select { margin-bottom:0; }
+.activity { display:flex; align-items:end; gap:3px; min-height:86px; border-bottom:1px solid var(--line); }
+.activity > span { flex:1; min-width:0; background:var(--accent); opacity:.8; border-radius:2px 2px 0 0; }
+.activity > span[data-failed=true] { background:var(--warn); }
+.activity-axis { margin-top:8px; font-size:12px; color:var(--muted); }
+#analyticsCount { font-size:13px; color:var(--muted); }
+@media(max-width:720px) { .provider-actions {flex-direction:column;} }
+.brand-symbol { width:16px; height:16px; border:2px solid var(--accent); border-radius:4px; position:relative; }
+.brand-symbol::after { content:""; width:6px; height:6px; border-radius:100%; background:var(--accent); position:absolute; top:3px; left:3px; }
+.status-dot { display:inline-block; flex:none; width:7px; height:7px; background:#656d79; border-radius:100%; vertical-align:middle; }
+.status-dot[data-tone=good] { background:#60cc9c; }
+.status-dot[data-tone=warn] { background:#e8b96a; }
+.status-dot[data-tone=bad] { background:#ef8c90; }
+
+ .page-heading { align-items:center; gap: 8px; }
+.page-heading h1 { font-size:26px; margin:0; }
+.page-heading .row { justify-content:start; }
+.inventory-summary { display:flex; flex-wrap:wrap; align-items:center; gap: 5px 18px; margin: 10px 0 17px; }
+.inventory-summary > div { display:inline-flex; align-items:baseline; gap:5px; }
+.inventory-summary small { font-size:12px; }
+.inventory-summary strong { font-variant-numeric:tabular-nums; font-size:12px; font-weight:600; }
+.model-tools-shell { padding:13px 15px; }
+.model-tools-shell .panel { padding:0; background:transparent; border:0; }
+.inventory { margin-top: 0; }
+.inventory table { min-width: 630px; }
+.inventory tbody tr th, .inventory tbody tr td { padding-block:8px; }
+.inventory tbody tr td :is(small,button) { font-size:12px; }
+.model-name { display:inline-flex; align-items:center; gap:8px; white-space:nowrap; }
+.model-metric { display:inline-flex; align-items:center; gap:7px; white-space:nowrap; }
+.model-signal { display:inline-flex; gap:3px; }
+.model-signal i { width:4px; height:4px; border-radius:50%; background:#41454f; }
+.model-signal i[data-on=true] { background:#61cd9d; }
+.model-kind { display:inline-block; border-radius:5px; padding:2px 6px; background:#252936; color:#b9c2df; font-size:11px; white-space:nowrap; }
+.inventory th, .inventory td { padding:10px 13px; }
+.inventory tbody tr:hover { background:#202229; }
+.inventory td { font-variant-numeric:tabular-nums; }
+.health .status-dot { margin-right:7px; }
+
+</style></head><body><div class="workspace">
+<header class="topbar">
+<div class="brand"><span class="brand-symbol" aria-hidden="true"></span><strong>Model Relay</strong></div>
+<nav aria-label="Workspace">
+<button data-tab="models">Models</button>
+<button data-tab="playground">Playground</button>
+<button data-tab="voice">Voice</button>
+<button data-tab="tasks">Tasks</button>
+<button data-tab="providers">Providers</button>
+<button data-tab="analytics">Analytics</button>
+</nav>
+<div class="gateway"><span class="status-dot" data-tone="good" aria-hidden="true"></span><span>Gateway</span><code>127.0.0.1:8520/v1</code></div>
+</header><main>
+<p id="notice" role="alert"></p>
+<section id="voice" hidden><h1>Voice assistant</h1><p>Talk to an installed Ollama model. Windows transcribes the recording and reads the reply aloud on this computer.</p>
+<div class="panel">
+<label>Voice model<select id="voiceModel"></select></label>
+<div class="row"><button id="recordVoice">Record</button><span id="voiceStatus" role="status">Microphone off</span></div>
+<form id="voiceForm"><label for="voiceText">Review transcript or type a message</label><textarea id="voiceText" required maxlength="4000"></textarea><button id="voiceSend">Send</button></form></div>
+<div class="panel" id="voiceResult" hidden><h2>Reply</h2><pre id="voiceReply"></pre><audio id="voiceAudio" controls hidden></audio><div class="row"><button class="secondary" id="voiceSpeak">Read aloud</button><button class="secondary" id="voiceTrace">View request trace</button></div></div>
+<button class="secondary" id="voiceReset">Clear voice conversation</button></section>
+<section id="models" hidden>
+<div class="row page-heading"><h1>Local models</h1><div class="row"><button id="refreshModels" class="secondary">Refresh</button><button id="addModels">Add model</button></div></div>
+<div class="inventory-summary" id="modelSummary" aria-live="polite"></div>
+
+<div id="installed" class="panel inventory table-wrap"></div>
+<details class="model-tools-shell" id="modelTools"><summary><strong>Install or find a model</strong></summary><div class="model-tools">
+<div class="panel"><h2>Install a model</h2><p>Choose a starter or enter an Ollama tag or Hugging Face GGUF repository.</p>
+<div id="catalog"></div><hr><form id="installForm"><label>Model reference<input id="modelRef" required placeholder="hf.co/owner/model-GGUF:Q4_K_M"></label><button>Install model</button></form>
+<p id="job" role="status"></p><small>Model downloads can use several gigabytes of disk space.</small></div>
+<div class="panel"><h2>Search Hugging Face</h2><p>Find public GGUF text models and open their model cards.</p><form id="searchForm"><label>Model name<input id="searchQuery" minlength="2" maxlength="100" required placeholder="e.g. Qwen Coder"></label><button>Search catalog</button></form><div id="searchResults" aria-live="polite"></div></div>
+</div></details></section>
+<section id="playground" hidden><h1>Coding playground</h1><p>Ask about your files or review a proposed edit. File contents stay with the selected local model.</p>
+<div class="panel"><div class="grid"><label>Local model<select id="chatModel"></select></label><label>Import text or code files<input type="file" id="files" multiple></label></div><div id="fileList"></div>
+<small>Up to 12 UTF-8 files, 40,000 characters in total. Files and conversation history stay in this browser tab during the session.</small></div>
+<div id="thread"></div><form class="panel" id="chatForm"><label>Message<textarea id="question" required placeholder="Explain how these files work together."></textarea></label>
+<div class="row"><label>Output<select id="editTarget"><option value="">Answer question</option></select></label><button id="sendChat">Send</button></div></form>
+<div id="proposal" class="panel" hidden><h2>Review suggested file</h2><div class="grid"><label>Original<textarea id="before" readonly></textarea></label><label>Suggested replacement<textarea id="after"></textarea></label></div><button id="saveFile">Accept and download file</button> <button class="secondary" id="discard">Discard</button></div>
+<div class="row"><button id="chatTrace" hidden class="secondary">View request trace</button><button id="prepareHandoff" hidden class="secondary">Prepare handoff</button><button class="secondary" id="resetChat">Clear conversation</button></div>
+<div class="panel" id="handoffPanel" hidden>
+<h2>Agent handoff</h2><p>Review what will be sent to your local Agent Handoff app. The transcript includes conversation text and filenames. Check it for code or secrets quoted in chat.</p>
+<label>Transcript<textarea id="handoffTranscript" maxlength="12000"></textarea></label>
+<div class="row"><button id="generateHandoff">Generate brief</button><small id="handoffStatus" role="status"></small></div>
+<div id="handoffPreview" hidden><label>Handoff brief<textarea id="handoffMarkdown"></textarea></label><button id="downloadHandoff" class="secondary">Download HANDOFF.md</button></div>
+</div></section>
+<section id="tasks"><h1>Run a task</h1><p>Send a text task to your model pool. Automatic routing selects a tier from the prompt.</p>
+<form class="panel" id="taskForm"><label>Task<textarea required id="prompt" placeholder="Compare two approaches to storing a conversation history."></textarea></label>
+<div class="row"><label>Routing<select id="tier"><option>auto</option><option>fast</option><option>balanced</option><option>strong</option></select></label><button id="run">Run task</button></div>
+<small>Strong tasks use a planner, writer, and reviewer. Any configured provider may receive the text during fallback.</small></form>
+<div class="panel" id="outputPanel" hidden><h2>Result</h2><pre id="answer"></pre><button class="secondary" id="viewTrace">View request trace</button></div></section>
+<section id="providers" hidden><h1>Providers</h1><p>Connect model endpoints and assign each a tier for routing.</p>
+<div class="panel"><div class="row"><h2>Unified API key</h2><button class="secondary" id="copy">Copy gateway key</button></div><small>Use this key with the local /v1 endpoint.</small></div>
+<div id="providerList" class="panel inventory table-wrap"></div>
+<details><summary><strong>Add a provider</strong></summary><form id="providerForm"><div class="grid">
+<label>Provider preset<select id="preset"><option>Ollama</option><option>Gemini</option><option>Groq</option><option>OpenRouter</option><option>Custom</option></select></label>
+<label>Display name<input id="label" required maxlength="80"></label></div>
+<label>API base URL<input id="base" required></label><div class="grid"><label>Model ID<input id="model" required></label><label>Model tier<select id="providerTier"><option>fast</option><option selected>balanced</option><option>strong</option></select></label></div>
+<label>Provider API key<input id="secret" type="password" autocomplete="off" placeholder="Optional for local Ollama"></label><div class="row"><button id="saveProvider">Save and check</button><small>Checks use one short provider request.</small></div><p id="providerStatus" role="status"></p></form></details></section>
+<section id="analytics" hidden><div class="row"><h1>Request analytics</h1><div class="row"><button class="secondary" id="exportAnalytics" disabled>Export traces</button><button class="secondary" id="refresh">Refresh</button></div></div>
+
+<div class="panel filters">
+<label class="range-label">Time range<select id="analyticsWindow"><option value="24h">Last 24 hours</option><option value="7d" selected>Last 7 days</option><option value="30d">Last 30 days</option><option value="90d">Last 90 days</option></select></label>
+<label>Request type<select id="analyticsMode"><option value="">All types</option><option value="chat">API chat</option><option value="task">Task</option><option value="playground">Playground</option><option value="voice">Voice</option></select></label>
+<label>Outcome<select id="analyticsOutcome"><option value="">Any outcome</option><option value="attention">Any failed step</option><option value="failed">Request failed</option><option value="recovered">Recovered after a failed step</option><option value="clean">Succeeded without errors</option></select></label>
+<label>Model<select id="analyticsModel"><option value="">All models</option></select></label>
+<button class="secondary" id="resetAnalytics">Clear filters</button></div>
+<div class="stats" id="stats"></div>
+<div id="activityPanel" class="panel"><h2>Request volume</h2><div id="activity" class="activity"></div><div id="activityAxis" class="row activity-axis"></div></div>
+<div class="panel"><h2>Model performance</h2><div class="table-wrap"><table aria-label="Model performance"><thead><tr><th scope="col">Provider / model</th><th scope="col">Calls</th><th scope="col">Failed</th><th scope="col">Median call</th><th scope="col">Reported tokens</th></tr></thead><tbody id="modelMetrics"></tbody></table></div></div>
+<h2>Request traces</h2><p id="analyticsCount" role="status"></p><div id="traces"></div></section></main></div>
+<script>
+const el=id=>document.getElementById(id);
+const presets={Ollama:"http://127.0.0.1:11434/v1",Gemini:"https://generativelanguage.googleapis.com/v1beta/openai",Groq:"https://api.groq.com/openai/v1",OpenRouter:"https://openrouter.ai/api/v1",Custom:""};
+let lastRun="",wantedTrace="";
+function node(tag,text){const n=document.createElement(tag);n.textContent=text;return n}
+async function api(path,method="GET",body){const r=await fetch(path,{method,headers:{"X-Relay-Admin":"dashboard","Content-Type":"application/json"},body:body===undefined?undefined:JSON.stringify(body)});const data=await r.json();if(!r.ok){const err=new Error(data.error?.message||data.detail||"Request failed");err.run=data.error?.request_id;throw err}return {data,run:r.headers.get("X-Request-ID")}}
+function problem(e){el("notice").textContent=e.message}
+async function tab(name){el("notice").textContent="";for(const b of document.querySelectorAll("[data-tab]")){const active=b.dataset.tab===name;b.setAttribute("aria-current",active);el(b.dataset.tab).hidden=!active}try{if(name==="providers")await list();if(name==="analytics")await analytics()}catch(e){problem(e)}}
+for(const b of document.querySelectorAll("[data-tab]"))b.onclick=()=>tab(b.dataset.tab);
+function preset(){el("base").value=presets[el("preset").value];el("label").value=el("preset").value;el("model").value=el("preset").value==="Ollama"?"llama3.1:latest":"";el("secret").value=""}
+el("preset").onchange=preset;
+el("copy").onclick=async()=>{try{await navigator.clipboard.writeText((await api("/admin/key")).data.key);el("copy").textContent="Key copied";setTimeout(()=>el("copy").textContent="Copy gateway key",1800)}catch(e){problem(e)}};
+el("taskForm").onsubmit=async e=>{e.preventDefault();el("run").disabled=true;el("run").textContent="Running…";el("notice").textContent="";el("outputPanel").hidden=true;try{const r=await api("/admin/tasks","POST",{model:el("tier").value,messages:[{role:"user",content:el("prompt").value}]});lastRun=r.run;el("answer").textContent=r.data.choices[0].message.content;el("outputPanel").hidden=false}catch(e){problem(e);if(e.run){lastRun=e.run;el("answer").textContent=e.message;el("outputPanel").hidden=false}}finally{el("run").disabled=false;el("run").textContent="Run task"}};
+el("viewTrace").onclick=()=>{wantedTrace=lastRun;tab("analytics")};
+preset();tab("tasks");
+</script><script src="/providers.js"></script><script src="/analytics.js"></script><script src="/studio.js"></script><script src="/voice.js"></script></body></html>
