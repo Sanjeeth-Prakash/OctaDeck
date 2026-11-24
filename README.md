@@ -2,7 +2,7 @@
 
 A local model gateway for people who use several LLM APIs. Connect provider models, give your apps one bearer key, and inspect the route each request took. The Tasks tab also runs a bounded planning and review workflow for demanding text requests.
 
-[Download the MuxDeck Windows preview](https://github.com/Sanjeeth-Prakash/MuxDeck/releases/tag/v0.2.0)
+[Download MuxDeck for Windows](https://github.com/Sanjeeth-Prakash/MuxDeck/releases/latest)
 
 The dashboard keeps Models, Playground, Voice, Media, Tasks, Providers, and Analytics in a sidebar on desktop and compact navigation on smaller screens. The Models and Providers tables surface local usage and connection health.
 
@@ -60,7 +60,7 @@ The product hypothesis to test is whether users can go from finding a local mode
 
 ## Windows desktop app
 
-Download **MuxDeck-Setup-x64.exe** from the Windows preview release, choose an installation directory, and open **MuxDeck.lnk**. When upgrading, select the existing application folder to keep its providers, settings, and analytics. The unsigned setup bundles Python and the app. Windows supplies WebView2 and .NET Framework. Cloud connections work directly with provider keys. Install Ollama separately if you want to run and download models locally. [Windows preview release](https://github.com/Sanjeeth-Prakash/MuxDeck/releases/tag/v0.2.0)
+Download **MuxDeck-Setup-x64.exe** from the latest Windows release, choose an installation directory, and open **MuxDeck.lnk**. When upgrading, select the existing application folder to keep its providers, settings, and analytics. The unsigned setup bundles Python and the app. Windows supplies WebView2 and .NET Framework. Cloud connections work directly with provider keys. Install Ollama separately if you want to run and download models locally. [Latest Windows release](https://github.com/Sanjeeth-Prakash/MuxDeck/releases/latest)
 
 The first public release used the earlier Model Relay name. The Playground, Voice, and handoff walkthrough images show that earlier version. [Release archive](https://github.com/Sanjeeth-Prakash/MuxDeck/releases)
 

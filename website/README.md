@@ -10,7 +10,7 @@ From this directory, start a loopback preview:
 python -m http.server 8530 --bind 127.0.0.1 --directory dist
 ```
 
-Open http://127.0.0.1:8530. The Windows button links to the public MuxDeck preview. To offer a local build instead, serve a copy of `dist/` with the executable at `downloads/MuxDeck-Setup-x64.exe` in that copy. The loopback page detects that file and uses it as the download. The demo copy and installer can stay outside Git. [MuxDeck Windows preview](https://github.com/Sanjeeth-Prakash/MuxDeck/releases/tag/v0.2.0)
+Open http://127.0.0.1:8530. The Windows button links to the current MuxDeck release. To offer a local build instead, serve a copy of `dist/` with the executable at `downloads/MuxDeck-Setup-x64.exe` in that copy. The loopback page detects that file and uses it as the download. The demo copy and installer can stay outside Git. [Latest Windows release](https://github.com/Sanjeeth-Prakash/MuxDeck/releases/latest)
 
 The screenshot tabs show the installed app. The PowerShell example uses the local gateway on port 8520 and needs a gateway key from your own running instance. The landing page itself can be served by any static host.
 
