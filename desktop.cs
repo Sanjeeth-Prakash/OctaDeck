@@ -20,7 +20,7 @@ internal sealed class RelayWindow : Form
     {
         this.source = source;
         this.home = home;
-        Text = "MuxDeck";
+        Text = "OctaDeck";
         Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
         Width = 1180;
         Height = 800;
@@ -35,7 +35,7 @@ internal sealed class RelayWindow : Form
             try { await OpenDashboard(); }
             catch (Exception error)
             {
-                MessageBox.Show(error.Message, "MuxDeck", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(error.Message, "OctaDeck", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Close();
             }
         };
@@ -66,7 +66,7 @@ internal sealed class RelayWindow : Form
             command.WorkingDirectory = source;
             command.UseShellExecute = false;
             command.CreateNoWindow = true;
-            command.EnvironmentVariables["MUXDECK_HOME"] = Path.Combine(home, "data");
+            command.EnvironmentVariables["OCTADECK_HOME"] = Path.Combine(home, "data");
             command.EnvironmentVariables["TEMP"] = Directory.CreateDirectory(Path.Combine(home, "temp")).FullName;
             command.EnvironmentVariables["TMP"] = command.EnvironmentVariables["TEMP"];
             command.EnvironmentVariables["PYTHONDONTWRITEBYTECODE"] = "1";
@@ -74,10 +74,10 @@ internal sealed class RelayWindow : Form
             for (int i = 0; i < 30; ++i)
             {
                 if (await Task.Run((Func<bool>)Ready)) break;
-                if (server.HasExited) throw new InvalidOperationException("MuxDeck could not start on port 8520.");
+                if (server.HasExited) throw new InvalidOperationException("OctaDeck could not start on port 8520.");
                 await Task.Delay(250);
             }
-            if (!await Task.Run((Func<bool>)Ready)) throw new InvalidOperationException("MuxDeck did not start.");
+            if (!await Task.Run((Func<bool>)Ready)) throw new InvalidOperationException("OctaDeck did not start.");
         }
 
         var environment = await CoreWebView2Environment.CreateAsync(null, Path.Combine(home, "webview"));
@@ -122,7 +122,7 @@ internal sealed class RelayWindow : Form
     {
         if (args.Length < 1 || args.Length > 2 || !File.Exists(Path.Combine(args[0], "app.py")))
         {
-            MessageBox.Show("Launch MuxDeck using the installed shortcut.", "MuxDeck");
+            MessageBox.Show("Launch OctaDeck using the installed shortcut.", "OctaDeck");
             return;
         }
         var home = args.Length == 2 ? args[1] :

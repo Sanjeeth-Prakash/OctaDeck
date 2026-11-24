@@ -189,7 +189,7 @@ el("mediaDownload").onclick = async () => {
     outputURL = URL.createObjectURL(blob);
     const file = node("a", "Save video");
     file.href = outputURL;
-    file.download = "muxdeck-video." + (blob.type === "video/webm" ? "webm" : "mp4");
+    file.download = "octadeck-video." + (blob.type === "video/webm" ? "webm" : "mp4");
     file.click();
     const preview = node("video", "");
     preview.src = outputURL;

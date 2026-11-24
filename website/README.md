@@ -1,8 +1,8 @@
-# MuxDeck landing page
+# OctaDeck landing page
 
 The static site in `dist/` contains all its assets and needs no Node dependencies or build step.
 
-![MuxDeck landing page with the Windows download and desktop app preview](../docs/landing.png)
+![OctaDeck landing page with the Windows download and desktop app preview](../docs/landing.png)
 
 From this directory, start a loopback preview:
 
@@ -10,7 +10,7 @@ From this directory, start a loopback preview:
 python -m http.server 8530 --bind 127.0.0.1 --directory dist
 ```
 
-Open http://127.0.0.1:8530. The Windows button links to the current MuxDeck release. To offer a local build instead, serve a copy of `dist/` with the executable at `downloads/MuxDeck-Setup-x64.exe` in that copy. The loopback page detects that file and uses it as the download. The demo copy and installer can stay outside Git. [Latest Windows release](https://github.com/Sanjeeth-Prakash/MuxDeck/releases/latest)
+Open http://127.0.0.1:8530. The Windows button links to the current OctaDeck release. To offer a local build instead, serve a copy of `dist/` with the executable at `downloads/OctaDeck-Setup-x64.exe` in that copy. The loopback page detects that file and uses it as the download. The demo copy and installer can stay outside Git. [Latest Windows release](https://github.com/Sanjeeth-Prakash/OctaDeck/releases/latest)
 
 The screenshot tabs show the installed app. The PowerShell example uses the local gateway on port 8520 and needs a gateway key from your own running instance. The landing page itself can be served by any static host.
 
@@ -23,7 +23,7 @@ The [backdrop](dist/assets/night-crossing.webp) was made with built-in image gen
 
 </details>
 
-The [MuxDeck octopus logo](../assets/muxdeck-mark.png) uses the same white pixel artwork on the landing page and in the dashboard. Its [Windows icon](../assets/muxdeck.ico) includes sizes for the shortcut, taskbar, and installer. The artwork was created with built-in image generation.
+The [OctaDeck octopus logo](../assets/octadeck-mark.png) uses the same white pixel artwork on the landing page and in the dashboard. Its [Windows icon](../assets/octadeck.ico) includes sizes for the shortcut, taskbar, and installer. The artwork was created with built-in image generation.
 
 <details>
 <summary>Logo prompt</summary>

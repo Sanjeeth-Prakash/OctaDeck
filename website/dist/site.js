@@ -77,7 +77,7 @@ async function localDownload(filename) {
 
 async function selectLocalInstaller() {
   if (!["localhost", "127.0.0.1", "[::1]"].includes(location.hostname)) return;
-  const name = "MuxDeck-Setup-x64.exe";
+  const name = "OctaDeck-Setup-x64.exe";
   const path = await localDownload(name);
   if (!path) return;
   const installer = document.querySelector("#installer");

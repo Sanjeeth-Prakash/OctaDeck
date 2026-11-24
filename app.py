@@ -23,10 +23,10 @@ import media
 from provider_catalog import CatalogError, discover, presets
 
 ROOT = Path(__file__).parent
-DATA = Path(os.environ.get("MUXDECK_HOME") or os.environ.get("MODEL_RELAY_HOME") or (ROOT / ".data"))
+DATA = Path(os.environ.get("OCTADECK_HOME") or os.environ.get("MUXDECK_HOME") or os.environ.get("MODEL_RELAY_HOME") or (ROOT / ".data"))
 db = Store(DATA)
 installer = Installer()
-app = FastAPI(title="MuxDeck")
+app = FastAPI(title="OctaDeck")
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost","127.0.0.1"])
 
 class Strict(BaseModel):
@@ -89,9 +89,9 @@ def interface_font():
     return FileResponse(ROOT/"assets/inter-latin.woff2",media_type="font/woff2",
                         headers={"Cache-Control":"public, max-age=86400"})
 
-@app.get("/assets/muxdeck-mark.png", include_in_schema=False)
+@app.get("/assets/octadeck-mark.png", include_in_schema=False)
 def interface_mark():
-    return FileResponse(ROOT / "assets/muxdeck-mark.png", media_type="image/png")
+    return FileResponse(ROOT / "assets/octadeck-mark.png", media_type="image/png")
 
 @app.get("/admin/providers",dependencies=[Depends(admin)])
 def providers():

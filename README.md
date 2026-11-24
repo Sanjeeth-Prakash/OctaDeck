@@ -1,8 +1,8 @@
-# MuxDeck
+# OctaDeck
 
 A local model gateway for people who use several LLM APIs. Connect provider models, give your apps one bearer key, and inspect the route each request took. The Tasks tab also runs a bounded planning and review workflow for demanding text requests.
 
-[Download MuxDeck for Windows](https://github.com/Sanjeeth-Prakash/MuxDeck/releases/latest)
+[Download OctaDeck for Windows](https://github.com/Sanjeeth-Prakash/OctaDeck/releases/latest)
 
 The dashboard keeps Models, Playground, Voice, Media, Tasks, Providers, and Analytics in a sidebar on desktop and compact navigation on smaller screens. The Models and Providers tables surface local usage and connection health.
 
@@ -10,15 +10,15 @@ The [product landing page](website/README.md) includes an app preview, a PowerSh
 
 ## Local model studio
 
-With MuxDeck running, `python smoke_playground.py llama3.1:latest qwen2.5-coder:1.5b granite3.3:2b` checks live chat, a Python edit with a known expected result, syntax validation, and request IDs. Install the listed models through **Add model** first. This is a focused compatibility check, and its result is specific to the sample task and the installed model versions.
+With OctaDeck running, `python smoke_playground.py llama3.1:latest qwen2.5-coder:1.5b granite3.3:2b` checks live chat, a Python edit with a known expected result, syntax validation, and request IDs. Install the listed models through **Add model** first. This is a focused compatibility check, and its result is specific to the sample task and the installed model versions.
 
-Qwen2.5-Coder is the initial Playground selection when installed. You can switch models at any time. The 135M SmolLM2 model completed the chat request, then produced invalid Python on both tries of the same coding fixture. MuxDeck blocked the replacement and recorded both failed checks.
+Qwen2.5-Coder is the initial Playground selection when installed. You can switch models at any time. The 135M SmolLM2 model completed the chat request, then produced invalid Python on both tries of the same coding fixture. OctaDeck blocked the replacement and recorded both failed checks.
 
 Live compatibility checks passed on Llama 3.1, Qwen2.5-Coder 1.5B, and Granite 3.3 2B for the sample Python edit. Chrome also verified file import, approval, download, and opening the corresponding trace for both new models. An on-disk apply was verified using a browser test filesystem handle.
 
 **Models** lists installed Ollama models and offers one-click installation, progress and retry. Start Ollama first. Select a starter, enter a registry tag, or search public Hugging Face GGUF text models and inspect their model cards. For a particular quantization enter `hf.co/owner/repository:Q4_K_M`. Downloads can be large. The runtime must support the model architecture; a repository appearing in search does not guarantee that it fits your hardware. A completed local chat install joins the gateway pool automatically.
 
-![MuxDeck showing installed models, observed success rates, and call latency](docs/models.png)
+![OctaDeck showing installed models, observed success rates, and call latency](docs/models.png)
 
 The inventory shows each local model's last seven days of recorded model calls, including success rate and median call latency. The dotted indicator represents the observed success rate. Models without calls display **No data**. The interface bundles the Latin Inter variable font under the [SIL Open Font License](assets/Inter-OFL.txt).
 
@@ -30,7 +30,7 @@ The playground server owns the assistant instructions and treats imported text a
 
 ### Hand off a playground session
 
-Run the separate ThreadBrief app on port 8512 with Ollama and Llama 3.1. In the Playground, make a request, select **Prepare handoff**, and review the proposed transcript. It includes recent turns, imported filenames, and recorded actions such as a syntax check, a discarded draft, or a save. MuxDeck omits raw file attachments and generated replacements from the transcript. Review chat excerpts for pasted or quoted code before generating. [ThreadBrief on GitHub](https://github.com/Sanjeeth-Prakash/ThreadBrief)
+Run the separate ThreadBrief app on port 8512 with Ollama and Llama 3.1. In the Playground, make a request, select **Prepare handoff**, and review the proposed transcript. It includes recent turns, imported filenames, and recorded actions such as a syntax check, a discarded draft, or a save. OctaDeck omits raw file attachments and generated replacements from the transcript. Review chat excerpts for pasted or quoted code before generating. [ThreadBrief on GitHub](https://github.com/Sanjeeth-Prakash/ThreadBrief)
 
 **Generate brief** calls Agent Handoff over loopback. Its model selects evidence for the goal, verified state, next step, and constraints. Click **Download HANDOFF.md** after reviewing the editable brief. The next agent can open that file as context.
 
@@ -40,7 +40,7 @@ To call an installed model from another local text client, set its API base to `
 
 ### Model files
 
-Ollama manages the model weights. Windows uses the directory configured in `OLLAMA_MODELS`, or `%USERPROFILE%\.ollama\models` with the default setup. MuxDeck uses `MUXDECK_HOME` for its settings, keys, and request metadata. It also accepts the earlier `MODEL_RELAY_HOME` variable. When neither is set, it uses the project's gitignored `.data` directory.
+Ollama manages the model weights. Windows uses the directory configured in `OLLAMA_MODELS`, or `%USERPROFILE%\.ollama\models` with the default setup. OctaDeck uses `OCTADECK_HOME` for its settings, keys, and request metadata. It also accepts the earlier `MUXDECK_HOME` and `MODEL_RELAY_HOME` variables. When neither is set, it uses the project's gitignored `.data` directory.
 
 ### Voice assistant
 
@@ -60,9 +60,9 @@ The product hypothesis to test is whether users can go from finding a local mode
 
 ## Windows desktop app
 
-Download **MuxDeck-Setup-x64.exe** from the latest Windows release, choose an installation directory, and open **MuxDeck.lnk**. When upgrading, select the existing application folder to keep its providers, settings, and analytics. The unsigned setup bundles Python and the app. Windows supplies WebView2 and .NET Framework. Cloud connections work directly with provider keys. Install Ollama separately if you want to run and download models locally. [Latest Windows release](https://github.com/Sanjeeth-Prakash/MuxDeck/releases/latest)
+Download **OctaDeck-Setup-x64.exe** from the latest Windows release, choose an installation directory, and open **OctaDeck.lnk**. When upgrading, select the existing application folder to keep its providers, settings, and analytics. The unsigned setup bundles Python and the app. Windows supplies WebView2 and .NET Framework. Cloud connections work directly with provider keys. Install Ollama separately if you want to run and download models locally. [Latest Windows release](https://github.com/Sanjeeth-Prakash/OctaDeck/releases/latest)
 
-The first public release used the earlier Model Relay name. The Playground, Voice, and handoff walkthrough images show that earlier version. [Release archive](https://github.com/Sanjeeth-Prakash/MuxDeck/releases)
+Archived releases used the earlier Model Relay and MuxDeck names. The Playground, Voice, and handoff walkthrough images show earlier Windows builds. [Release archive](https://github.com/Sanjeeth-Prakash/OctaDeck/releases)
 
 To build the same type of installer from source, run `python build-release.py --output <build-directory>` on x64 Windows with Python, pip and .NET Framework available.
 
@@ -71,10 +71,10 @@ To build the same type of installer from source, run `python build-release.py --
 On x64 Windows with Python 3.11+, .NET Framework and Microsoft Edge WebView2 Runtime, run the installer from this project folder.
 
 ```powershell
-.\install-desktop.ps1 -InstallRoot 'G:\softwares\Models\MuxDeck'
+.\install-desktop.ps1 -InstallRoot 'G:\softwares\Models\OctaDeck'
 ```
 
-Open **MuxDeck.lnk** in that folder. The shortcut opens a native window with the existing Windows WebView2 runtime. The install directory holds the launcher, Python dependencies, app data, downloads, and browser profile. The app uses port 8520. When the window starts its own gateway, closing it stops the gateway. A gateway you started separately can be used with the browser or external clients. The launcher depends on the project source folder passed by the shortcut.
+Open **OctaDeck.lnk** in that folder. The shortcut opens a native window with the existing Windows WebView2 runtime. The install directory holds the launcher, Python dependencies, app data, downloads, and browser profile. The app uses port 8520. When the window starts its own gateway, closing it stops the gateway. A gateway you started separately can be used with the browser or external clients. The launcher depends on the project source folder passed by the shortcut.
 
 On this PC, one idle measurement shortly after opening Models showed **231.5 MiB of private committed memory** for the desktop window, WebView2, and gateway process tree combined. The Python gateway processes accounted for **42.8 MiB** of that total. These are workstation snapshots. Resident working set and memory while generating a response can vary. Ollama and loaded model weights run in separate processes.
 
@@ -90,7 +90,7 @@ python -m venv .venv
 
 Open **http://127.0.0.1:8520**. The first launch adds a local Ollama model named `llama3.1:latest`. To use it, start Ollama with that model installed. Under **Providers**, choose **Add a provider** to connect NVIDIA NIM, Gemini, Groq, OpenRouter, Cerebras, Mistral, Hugging Face, Cloudflare Workers AI, OpenCode Zen, Cohere, SiliconFlow, or Ollama. **Custom** accepts another compatible base URL. Enter a key and select **Find models** for providers that offer model discovery, or enter the exact model ID manually. Each preset links to provider documentation.
 
-Plans may be free, trial, metered, or restricted to certain models. For OpenRouter chat, discovery marks explicit `:free` and `openrouter/free` aliases. Text, image, video, and speech limits can use different units. **Reported tokens** in Analytics are usage from responses to MuxDeck, not an estimate of your remaining provider allowance.
+Plans may be free, trial, metered, or restricted to certain models. For OpenRouter chat, discovery marks explicit `:free` and `openrouter/free` aliases. Text, image, video, and speech limits can use different units. **Reported tokens** in Analytics are usage from responses to OctaDeck, not an estimate of your remaining provider allowance.
 
 In **Tasks**, try “Say hello in Swedish.” Then try “Describe the tradeoffs between local and hosted inference.” Open **View request trace** to see the difference. A request can send its text and intermediate outputs to any configured fallback provider. Paid providers can bill for each attempt.
 
@@ -162,6 +162,6 @@ Open a trace to see why the router picked a tier and where a provider call or fi
 
 ## Reference and verification
 
-I studied the upstream routing, provider adapter and analytics structure, then implemented this independent Python application. FreeLLMAPI already provides a unified key, multi-provider routing, failover and analytics. MuxDeck explores when one text request should expand into multiple model roles and how the user can see the reason and outcome. [FreeLLMAPI router](https://github.com/tashfeenahmed/freellmapi/blob/7619c8fee886eeba8f28c84d5fc943f4459c1fbc/server/src/services/router.ts) · [Provider adapter](https://github.com/tashfeenahmed/freellmapi/blob/7619c8fee886eeba8f28c84d5fc943f4459c1fbc/server/src/providers/openai-compat.ts) · [Analytics](https://github.com/tashfeenahmed/freellmapi/blob/7619c8fee886eeba8f28c84d5fc943f4459c1fbc/server/src/routes/analytics.ts)
+I studied the upstream routing, provider adapter and analytics structure, then implemented this independent Python application. FreeLLMAPI already provides a unified key, multi-provider routing, failover and analytics. OctaDeck explores when one text request should expand into multiple model roles and how the user can see the reason and outcome. [FreeLLMAPI router](https://github.com/tashfeenahmed/freellmapi/blob/7619c8fee886eeba8f28c84d5fc943f4459c1fbc/server/src/services/router.ts) · [Provider adapter](https://github.com/tashfeenahmed/freellmapi/blob/7619c8fee886eeba8f28c84d5fc943f4459c1fbc/server/src/providers/openai-compat.ts) · [Analytics](https://github.com/tashfeenahmed/freellmapi/blob/7619c8fee886eeba8f28c84d5fc943f4459c1fbc/server/src/routes/analytics.ts)
 
 Run the tests with `.\.venv\Scripts\python.exe -m unittest -v`. The current suite has 23 tests covering authentication, saved credentials, retry after HTTP 429, request classification, agent stage order, model discovery, media routes, and video job polling. Local Ollama chat and embeddings and public OpenRouter model discovery were verified live. NVIDIA inference and hosted media generation were checked with fixtures. The effect of agent review on answer quality remains unmeasured.
