@@ -1,7 +1,8 @@
+import base64
 import os
 import secrets
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 from urllib.parse import urlsplit
 
 import httpx
@@ -18,12 +19,14 @@ from storage import Store, TIERS
 from local_models import BASE, Installer, inventory, reference
 from health import probe_provider
 from analytics import recent_model_metrics, report
+import media
+from provider_catalog import CatalogError, discover, presets
 
 ROOT = Path(__file__).parent
-DATA = Path(os.environ.get("MODEL_RELAY_HOME") or (ROOT / ".data"))
+DATA = Path(os.environ.get("MUXDECK_HOME") or os.environ.get("MODEL_RELAY_HOME") or (ROOT / ".data"))
 db = Store(DATA)
 installer = Installer()
-app = FastAPI(title="Model Relay")
+app = FastAPI(title="MuxDeck")
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost","127.0.0.1"])
 
 class Strict(BaseModel):
@@ -35,6 +38,12 @@ class Provider(Strict):
     model: str = Field(min_length=1,max_length=200)
     tier: Literal["fast","balanced","strong"]
     key: str = Field(default="",max_length=8192)
+    capability: Literal["chat", "embeddings", "speech", "transcription", "images", "video"] = "chat"
+
+class ModelDiscovery(Strict):
+    preset: str = Field(min_length=1, max_length=80)
+    capability: Literal["chat", "embeddings", "speech", "transcription", "images", "video"] = "chat"
+    key: str = Field(default="", max_length=8192)
 
 class Message(Strict):
     role: Literal["system","user","assistant"]
@@ -80,10 +89,26 @@ def interface_font():
     return FileResponse(ROOT/"assets/inter-latin.woff2",media_type="font/woff2",
                         headers={"Cache-Control":"public, max-age=86400"})
 
+@app.get("/assets/muxdeck-mark.png", include_in_schema=False)
+def interface_mark():
+    return FileResponse(ROOT / "assets/muxdeck-mark.png", media_type="image/png")
+
 @app.get("/admin/providers",dependencies=[Depends(admin)])
 def providers():
-    fields = ("id","label","base","model","tier","state","detail","http_status","checked_at","duration_ms")
+    fields = ("id","label","base","model","tier","capability","state","detail","http_status","checked_at","duration_ms")
     return [{k:r[k] for k in fields} for r in db.providers()]
+
+@app.get("/admin/provider-catalog", dependencies=[Depends(admin)])
+def provider_catalog():
+    return presets()
+
+@app.post("/admin/provider-models", dependencies=[Depends(admin)])
+def provider_models(item: ModelDiscovery):
+    with httpx.Client(timeout=httpx.Timeout(14, connect=5), follow_redirects=False, trust_env=False) as client:
+        try:
+            return discover(client, item.preset, item.capability, item.key.strip())
+        except CatalogError as error:
+            raise HTTPException(error.status, str(error)) from error
 
 def run_probe(provider):
     with httpx.Client(timeout=httpx.Timeout(15,connect=5),follow_redirects=False,trust_env=False) as client:
@@ -92,6 +117,8 @@ def run_probe(provider):
 @app.post("/admin/providers",dependencies=[Depends(admin)])
 def add(p: Provider):
     base=p.base.rstrip("/")
+    if "{account_id}" in base:
+        raise HTTPException(422, "Replace {account_id} in the Cloudflare API URL.")
     try:
         parts=urlsplit(base)
         parts.port
@@ -103,7 +130,11 @@ def add(p: Provider):
         raise HTTPException(422,"Use an HTTPS API base or a loopback HTTP base.")
     if not p.model.strip() or not p.label.strip():
         raise HTTPException(422,"Enter a model ID and label.")
-    provider = db.add(p.label.strip(),base,p.model.strip(),p.tier,p.key.strip())
+    if p.capability == "video" and base != media.OPENROUTER:
+        raise HTTPException(422, "Video generation currently uses OpenRouter.")
+    provider = db.add(p.label.strip(), base, p.model.strip(), p.tier, p.key.strip(), p.capability)
+    if p.capability != "chat":
+        return {"saved": True, "id": provider["id"], "health": None}
     return {"saved":True,"id":provider["id"],"health":run_probe(provider)}
 
 @app.post("/admin/providers/{provider_id}/check",dependencies=[Depends(admin)])
@@ -111,6 +142,8 @@ def check_provider(provider_id: str):
     provider = next((row for row in db.providers() if row["id"] == provider_id),None)
     if provider is None:
         raise HTTPException(404,"Unknown provider.")
+    if provider["capability"] != "chat":
+        raise HTTPException(422, "Run this model in Media to verify its generation endpoint.")
     return run_probe(provider)
 
 @app.delete("/admin/providers/{provider_id}",dependencies=[Depends(admin)])
@@ -129,7 +162,7 @@ def analytics():
 
 @app.get("/admin/analytics/report",dependencies=[Depends(admin)])
 def analytics_report(window: Literal["24h","7d","30d","90d"]="7d",
-                     mode: Literal["","chat","task","playground","voice"]="",
+                     mode: Literal["","chat","task","playground","voice","embeddings","speech","transcription","images","video"]="",
                      outcome: Literal["","attention","failed","recovered","clean"]="",
                      model: str=Query(default="",max_length=250),
                      trace: str=Query(default="",max_length=64)):
@@ -137,8 +170,13 @@ def analytics_report(window: Literal["24h","7d","30d","90d"]="7d",
 
 @app.get("/v1/models",dependencies=[Depends(bearer)])
 def models():
-    local = ["local/"+p["model"] for p in db.providers() if p["base"] == BASE+"/v1"]
-    return {"object":"list","data":[{"id":x,"object":"model","owned_by":"local"} for x in dict.fromkeys(["auto",*TIERS,*local])]}
+    configured = db.providers()
+    local = ["local/"+p["model"] for p in configured if p["base"] == BASE+"/v1" and p["capability"] == "chat"]
+    details = [{"id": x, "object": "model", "owned_by": "local"} for x in dict.fromkeys(["auto", *TIERS, *local])]
+    details.extend({
+        "id": "media/" + p["id"], "object": "model", "owned_by": p["label"], "capability": p["capability"]
+    } for p in configured if p["capability"] != "chat")
+    return {"object": "list", "data": details}
 
 class Install(Strict):
     name: str = Field(min_length=1, max_length=300)
@@ -315,3 +353,115 @@ def voice_chat(c:Completion):
     if not c.model.startswith("local/"):
         raise HTTPException(422,"Select an installed local model.")
     return dispatch(c,"voice")
+
+
+class MediaRequest(Strict):
+    model: str = Field(min_length=1, max_length=100)
+
+
+EmbeddingText = Annotated[str, Field(min_length=1, max_length=8192)]
+
+
+class EmbeddingsRequest(MediaRequest):
+    input: EmbeddingText | Annotated[list[EmbeddingText], Field(min_length=1, max_length=32)]
+
+
+class SpeechRequest(MediaRequest):
+    input: str = Field(min_length=1, max_length=4096)
+    voice: str = Field(min_length=1, max_length=150)
+    response_format: Literal["mp3", "wav"] = "mp3"
+
+
+class InputAudio(Strict):
+    data: str = Field(min_length=4, max_length=4_000_000)
+    format: Literal["wav", "mp3", "flac", "m4a", "ogg", "webm", "aac"]
+
+
+class TranscriptionRequest(MediaRequest):
+    input_audio: InputAudio
+    language: str | None = Field(default=None, pattern=r"^[a-z]{2}$")
+
+
+class ImagesRequest(MediaRequest):
+    prompt: str = Field(min_length=1, max_length=4000)
+    size: str | None = Field(default=None, pattern=r"^[0-9]{2,4}x[0-9]{2,4}$")
+
+
+class VideoRequest(MediaRequest):
+    prompt: str = Field(min_length=1, max_length=4000)
+    duration: int | None = Field(default=None, ge=1, le=60)
+    aspect_ratio: Literal["16:9", "9:16", "1:1"] | None = None
+
+
+def media_client():
+    return httpx.Client(timeout=httpx.Timeout(120, connect=8), follow_redirects=False, trust_env=False)
+
+
+def media_reply(body, kind, headers=None, status=200):
+    headers = {"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", **(headers or {})}
+    if kind == "application/json":
+        return JSONResponse(body, status_code=status, headers=headers)
+    return Response(body, status_code=status, media_type=kind, headers=headers)
+
+
+def dispatch_media(mode, request):
+    payload = request.model_dump(exclude={"model"}, exclude_none=True)
+    with media_client() as client:
+        result, kind, run = media.generate(db, client, mode, request.model, payload)
+    return media_reply(result, kind, {"X-Request-ID": run}, 202 if mode == "video" else 200)
+
+
+@app.post("/v1/embeddings", dependencies=[Depends(bearer)])
+@app.post("/admin/media/embeddings", dependencies=[Depends(admin)])
+def embeddings(request: EmbeddingsRequest):
+    return dispatch_media("embeddings", request)
+
+
+@app.post("/v1/audio/speech", dependencies=[Depends(bearer)])
+@app.post("/admin/media/speech", dependencies=[Depends(admin)])
+def synthesize(request: SpeechRequest):
+    return dispatch_media("speech", request)
+
+
+@app.post("/v1/audio/transcriptions", dependencies=[Depends(bearer)])
+@app.post("/admin/media/transcription", dependencies=[Depends(admin)])
+def transcribe_file(request: TranscriptionRequest):
+    try:
+        if not base64.b64decode(request.input_audio.data, validate=True):
+            raise ValueError("Empty audio data")
+    except ValueError as error:
+        raise HTTPException(422, "Use base64 audio data without a URL prefix.") from error
+    return dispatch_media("transcription", request)
+
+
+@app.post("/v1/images/generations", dependencies=[Depends(bearer)])
+@app.post("/admin/media/images", dependencies=[Depends(admin)])
+def generate_images(request: ImagesRequest):
+    return dispatch_media("images", request)
+
+
+@app.post("/v1/videos", dependencies=[Depends(bearer)])
+@app.post("/admin/media/video", dependencies=[Depends(admin)])
+def submit_video(request: VideoRequest):
+    return dispatch_media("video", request)
+
+
+@app.get("/v1/videos/{job}", dependencies=[Depends(bearer)])
+@app.get("/admin/media/video/{job}", dependencies=[Depends(admin)])
+def poll_video(job: str):
+    with media_client() as client:
+        result, kind = media.video_result(db, client, job)
+    return media_reply(result, kind)
+
+
+@app.get("/v1/videos/{job}/content", dependencies=[Depends(bearer)])
+@app.get("/admin/media/video/{job}/content", dependencies=[Depends(admin)])
+def download_video(job: str):
+    with media_client() as client:
+        result, kind = media.video_result(db, client, job, content=True)
+    return media_reply(result, kind)
+
+
+@app.get("/media.js", include_in_schema=False)
+def media_script():
+    return FileResponse(ROOT / "media.js", media_type="text/javascript")

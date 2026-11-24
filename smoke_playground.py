@@ -1,4 +1,4 @@
-"""Run live local-model smoke checks against the running Model Relay app."""
+"""Run live local-model smoke checks against the running MuxDeck app."""
 import argparse
 import ast
 import json

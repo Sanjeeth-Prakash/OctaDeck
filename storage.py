@@ -21,7 +21,8 @@ class Store:
             db.executescript("""
                 CREATE TABLE IF NOT EXISTS providers (
                   id TEXT PRIMARY KEY, label TEXT NOT NULL, base TEXT NOT NULL,
-                  model TEXT NOT NULL, tier TEXT NOT NULL, secret BLOB NOT NULL);
+                  model TEXT NOT NULL, tier TEXT NOT NULL, secret BLOB NOT NULL,
+                  capability TEXT NOT NULL DEFAULT 'chat');
                 CREATE TABLE IF NOT EXISTS runs (
                   id TEXT PRIMARY KEY, started REAL, tier TEXT, reason TEXT, status TEXT,
                   duration_ms INTEGER, mode TEXT);
@@ -31,16 +32,22 @@ class Store:
                 CREATE TABLE IF NOT EXISTS provider_health (
                   provider_id TEXT PRIMARY KEY, state TEXT NOT NULL, detail TEXT NOT NULL,
                   http_status INTEGER, checked_at REAL NOT NULL, duration_ms INTEGER NOT NULL);
+                CREATE TABLE IF NOT EXISTS video_jobs (
+                  id TEXT PRIMARY KEY, provider_id TEXT NOT NULL, upstream_id TEXT NOT NULL,
+                  created REAL NOT NULL);
                 CREATE INDEX IF NOT EXISTS runs_started ON runs(started);
                 CREATE INDEX IF NOT EXISTS attempts_run ON attempts(run_id);
             """)
+            provider_columns = {row["name"] for row in db.execute("PRAGMA table_info(providers)")}
+            if "capability" not in provider_columns:
+                db.execute("ALTER TABLE providers ADD COLUMN capability TEXT NOT NULL DEFAULT 'chat'")
             columns = {row["name"] for row in db.execute("PRAGMA table_info(attempts)")}
             for column in ("input_tokens", "output_tokens"):
                 if column not in columns:
                     db.execute("ALTER TABLE attempts ADD COLUMN " + column + " INTEGER")
             db.execute("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY)")
             if not db.execute("SELECT 1 FROM settings WHERE key='seeded'").fetchone():
-                db.execute("INSERT INTO providers VALUES(?,?,?,?,?,?)",
+                db.execute("INSERT INTO providers(id,label,base,model,tier,secret) VALUES(?,?,?,?,?,?)",
                            ("local","Local Ollama","http://127.0.0.1:11434/v1","llama3.1:latest","balanced",b""))
                 db.execute("INSERT INTO settings VALUES('seeded')")
 
@@ -65,12 +72,28 @@ class Store:
                 FROM providers p LEFT JOIN provider_health h ON h.provider_id = p.id ORDER BY p.rowid
             """)]
 
-    def add(self, label, base, model, tier, key):
+    def add(self, label, base, model, tier, key, capability="chat"):
         provider_id = uuid.uuid4().hex
         secret = self.cipher.encrypt(key.encode()) if key else b""
         with self.db() as db:
-            db.execute("INSERT INTO providers VALUES(?,?,?,?,?,?)", (provider_id,label,base,model,tier,secret))
-        return {"id":provider_id,"label":label,"base":base,"model":model,"tier":tier,"secret":secret}
+            db.execute("INSERT INTO providers(id,label,base,model,tier,secret,capability) VALUES(?,?,?,?,?,?,?)",
+                       (provider_id,label,base,model,tier,secret,capability))
+        return {"id":provider_id,"label":label,"base":base,"model":model,"tier":tier,
+                "secret":secret,"capability":capability}
+
+    def save_video_job(self, provider_id, upstream_id):
+        job = uuid.uuid4().hex
+        with self.db() as db:
+            db.execute("DELETE FROM video_jobs WHERE created < ?", (time() - 30 * 86400,))
+            result = db.execute("INSERT INTO video_jobs SELECT ?,id,?,? FROM providers WHERE id=?",
+                                (job,upstream_id,time(),provider_id))
+            return job if result.rowcount == 1 else None
+
+    def video_job(self, job):
+        with self.db() as db:
+            row = db.execute("SELECT provider_id,upstream_id FROM video_jobs WHERE id=? AND created>=?",
+                             (job,time() - 30 * 86400)).fetchone()
+        return dict(row) if row else None
 
     def save_health(self, provider_id, result):
         with self.db() as db:
@@ -80,6 +103,7 @@ class Store:
 
     def remove(self, provider_id):
         with self.db() as db:
+            db.execute("DELETE FROM video_jobs WHERE provider_id=?", (provider_id,))
             db.execute("DELETE FROM provider_health WHERE provider_id=?", (provider_id,))
             return db.execute("DELETE FROM providers WHERE id=?", (provider_id,)).rowcount
 
@@ -87,8 +111,10 @@ class Store:
         base = "http://127.0.0.1:11434/v1"
         canonical = name if ":" in name else name + ":latest"
         with self.db() as db:
-            db.execute("""INSERT INTO providers SELECT ?,?,?,?,?,?
-                       WHERE NOT EXISTS (SELECT 1 FROM providers WHERE base=? AND model IN (?,?))""",
+            db.execute("""INSERT INTO providers(id,label,base,model,tier,secret) SELECT ?,?,?,?,?,?
+                       WHERE NOT EXISTS (
+                         SELECT 1 FROM providers WHERE base=? AND model IN (?,?) AND capability='chat'
+                       )""",
                        ("ollama:"+canonical, "Local Ollama", base, canonical, "balanced", b"",
                         base, canonical, name))
 

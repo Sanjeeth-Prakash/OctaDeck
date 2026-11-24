@@ -89,7 +89,7 @@ def execute(db, client, messages, requested, mode, options, target=None):
     start = time.monotonic()
     status = "failed"
     try:
-        candidates = db.providers()
+        candidates = [provider for provider in db.providers() if provider["capability"] == "chat"]
         if pinned:
             try:
                 eligible = local_chat(client, pinned)

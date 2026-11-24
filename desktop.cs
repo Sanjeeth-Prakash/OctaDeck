@@ -20,7 +20,8 @@ internal sealed class RelayWindow : Form
     {
         this.source = source;
         this.home = home;
-        Text = "Model Relay";
+        Text = "MuxDeck";
+        Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
         Width = 1180;
         Height = 800;
         MinimumSize = new Size(420, 480);
@@ -34,7 +35,7 @@ internal sealed class RelayWindow : Form
             try { await OpenDashboard(); }
             catch (Exception error)
             {
-                MessageBox.Show(error.Message, "Model Relay", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(error.Message, "MuxDeck", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Close();
             }
         };
@@ -65,7 +66,7 @@ internal sealed class RelayWindow : Form
             command.WorkingDirectory = source;
             command.UseShellExecute = false;
             command.CreateNoWindow = true;
-            command.EnvironmentVariables["MODEL_RELAY_HOME"] = Path.Combine(home, "data");
+            command.EnvironmentVariables["MUXDECK_HOME"] = Path.Combine(home, "data");
             command.EnvironmentVariables["TEMP"] = Directory.CreateDirectory(Path.Combine(home, "temp")).FullName;
             command.EnvironmentVariables["TMP"] = command.EnvironmentVariables["TEMP"];
             command.EnvironmentVariables["PYTHONDONTWRITEBYTECODE"] = "1";
@@ -73,10 +74,10 @@ internal sealed class RelayWindow : Form
             for (int i = 0; i < 30; ++i)
             {
                 if (await Task.Run((Func<bool>)Ready)) break;
-                if (server.HasExited) throw new InvalidOperationException("Model Relay could not start on port 8520.");
+                if (server.HasExited) throw new InvalidOperationException("MuxDeck could not start on port 8520.");
                 await Task.Delay(250);
             }
-            if (!await Task.Run((Func<bool>)Ready)) throw new InvalidOperationException("Model Relay did not start.");
+            if (!await Task.Run((Func<bool>)Ready)) throw new InvalidOperationException("MuxDeck did not start.");
         }
 
         var environment = await CoreWebView2Environment.CreateAsync(null, Path.Combine(home, "webview"));
@@ -121,7 +122,7 @@ internal sealed class RelayWindow : Form
     {
         if (args.Length < 1 || args.Length > 2 || !File.Exists(Path.Combine(args[0], "app.py")))
         {
-            MessageBox.Show("Launch Model Relay using the installed shortcut.", "Model Relay");
+            MessageBox.Show("Launch MuxDeck using the installed shortcut.", "MuxDeck");
             return;
         }
         var home = args.Length == 2 ? args[1] :

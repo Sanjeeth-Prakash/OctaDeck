@@ -141,7 +141,7 @@ el("exportAnalytics").onclick = () => {
   const url = URL.createObjectURL(new Blob(["\uFEFF", csv], {type: "text/csv;charset=utf-8"}));
   const link = node("a", "");
   link.href = url;
-  link.download = "model-relay-traces.csv";
+  link.download = "muxdeck-traces.csv";
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 };

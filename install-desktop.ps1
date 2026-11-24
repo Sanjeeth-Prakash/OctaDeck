@@ -1,4 +1,4 @@
-param([string]$InstallRoot = 'G:\softwares\Models\model-relay')
+param([string]$InstallRoot = 'G:\softwares\Models\MuxDeck')
 
 $ErrorActionPreference = 'Stop'
 $source = $PSScriptRoot
@@ -37,15 +37,17 @@ if (-not ((Test-Path -LiteralPath $core) -and (Test-Path -LiteralPath $forms) -a
     } finally { $archive.Dispose() }
 }
 
-$exe = Join-Path $desktop.FullName 'ModelRelay.exe'
-& $compiler /nologo /target:winexe /platform:x64 /optimize+ "/out:$exe" "/reference:$core" "/reference:$forms" /reference:System.Windows.Forms.dll /reference:System.Drawing.dll (Join-Path $source 'desktop.cs')
+$exe = Join-Path $desktop.FullName 'MuxDeck.exe'
+$icon = Join-Path $source 'assets\muxdeck.ico'
+& $compiler /nologo /target:winexe /platform:x64 /optimize+ "/out:$exe" "/win32icon:$icon" "/reference:$core" "/reference:$forms" /reference:System.Windows.Forms.dll /reference:System.Drawing.dll (Join-Path $source 'desktop.cs')
 if ($LASTEXITCODE -ne 0) { throw 'Desktop host compilation failed.' }
 
-$linkPath = Join-Path $InstallRoot 'Model Relay.lnk'
+$linkPath = Join-Path $InstallRoot 'MuxDeck.lnk'
 $link = (New-Object -ComObject WScript.Shell).CreateShortcut($linkPath)
 $link.TargetPath = $exe
 $link.Arguments = '"' + $source + '"'
 $link.WorkingDirectory = $desktop.FullName
-$link.Description = 'Open Model Relay'
+$link.IconLocation = "$exe,0"
+$link.Description = 'Open MuxDeck'
 $link.Save()
 Write-Host $linkPath

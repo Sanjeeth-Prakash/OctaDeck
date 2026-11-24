@@ -1,4 +1,4 @@
-"""Build the x64 Model Relay setup executable in a user-selected work directory."""
+"""Build the x64 MuxDeck setup executable in a user-selected work directory."""
 import argparse
 import hashlib
 import os
@@ -17,7 +17,7 @@ WEBVIEW_VERSION = "1.0.4370.26"
 APP_FILES = (
     "app.py", "storage.py", "analytics.py", "routing.py", "playground.py", "voice.py",
     "health.py", "local_models.py", "speech.ps1", "index.html", "analytics.js",
-    "providers.js", "studio.js", "voice.js",
+    "providers.js", "studio.js", "voice.js", "media.js", "media.py", "provider_catalog.py",
 )
 
 
@@ -63,17 +63,18 @@ def package(root, staging):
                      "runtimes/win-x64/native/WebView2Loader.dll","LICENSE.txt"):
             (desktop/Path(name).name).write_bytes(source.read(name))
     compiler = Path(os.environ["WINDIR"])/"Microsoft.NET/Framework64/v4.0.30319/csc.exe"
-    flags = [str(compiler),"/nologo","/target:winexe","/platform:x64","/optimize+"]
+    icon = SOURCE / "assets/muxdeck.ico"
+    flags = [str(compiler),"/nologo","/target:winexe","/platform:x64","/optimize+","/win32icon:"+str(icon)]
     forms = "/reference:System.Windows.Forms.dll"
     refs = ["/reference:"+str(dll) for dll in sorted(desktop.glob("Microsoft.*.dll"))]
     subprocess.run([*flags,forms,"/reference:System.Drawing.dll",*refs,
-                    "/out:"+str(desktop/"ModelRelay.exe"),str(SOURCE/"desktop.cs")],env=env,check=True)
+                    "/out:"+str(desktop/"MuxDeck.exe"),str(SOURCE/"desktop.cs")],env=env,check=True)
     archive_path = staging/"payload.zip"
     with zipfile.ZipFile(archive_path,"w",zipfile.ZIP_DEFLATED) as output:
         for file in payload.rglob("*"):
             if file.is_file() and "__pycache__" not in file.parts:
                 output.write(file,file.relative_to(payload).as_posix())
-    setup = staging/"ModelRelay-Setup-x64.exe"
+    setup = staging/"MuxDeck-Setup-x64.exe"
     subprocess.run([*flags,forms,"/reference:Microsoft.CSharp.dll",
                     "/reference:System.IO.Compression.dll","/reference:System.IO.Compression.FileSystem.dll",
                     "/resource:"+str(archive_path)+",payload.zip","/out:"+str(setup),

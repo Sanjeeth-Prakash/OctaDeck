@@ -20,14 +20,15 @@ internal static class Setup
             if (home == null) return 0;
             var bundle = Install(home);
             var desktop = Path.Combine(bundle,"desktop");
-            var launcher = Path.Combine(desktop,"ModelRelay.exe");
+            var launcher = Path.Combine(desktop,"MuxDeck.exe");
             var arguments = "\"" + Path.Combine(bundle,"app") + "\" \"" + home + "\"";
             dynamic shell = Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell"));
-            dynamic shortcut = shell.CreateShortcut(Path.Combine(home,"Model Relay.lnk"));
+            dynamic shortcut = shell.CreateShortcut(Path.Combine(home,"MuxDeck.lnk"));
             shortcut.TargetPath = launcher;
             shortcut.Arguments = arguments;
             shortcut.WorkingDirectory = desktop;
-            shortcut.Description = "Open Model Relay";
+            shortcut.IconLocation = launcher + ",0";
+            shortcut.Description = "Open MuxDeck";
             shortcut.Save();
             if (!installOnly)
                 Process.Start(new ProcessStartInfo(launcher, arguments) {
@@ -38,7 +39,7 @@ internal static class Setup
         catch (Exception error)
         {
             if (installOnly) Console.Error.WriteLine(error.Message);
-            else MessageBox.Show(error.Message, "Model Relay Setup", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            else MessageBox.Show(error.Message, "MuxDeck Setup", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return 1;
         }
     }
@@ -47,10 +48,14 @@ internal static class Setup
     {
         using (var dialog = new FolderBrowserDialog())
         {
-            dialog.Description = "Choose where Model Relay should store the app, data, and browser profile.";
+            dialog.Description = "Choose where MuxDeck should store the app, data, and browser profile.";
             dialog.SelectedPath = AppDomain.CurrentDomain.BaseDirectory;
             if (dialog.ShowDialog() != DialogResult.OK) return null;
-            return Path.Combine(dialog.SelectedPath, "model-relay");
+            var selected = dialog.SelectedPath;
+            if (File.Exists(Path.Combine(selected, "Model Relay.lnk")) ||
+                File.Exists(Path.Combine(selected, "MuxDeck.lnk")))
+                return selected;
+            return Path.Combine(selected, "MuxDeck");
         }
     }
 
@@ -85,7 +90,7 @@ internal static class Setup
                 }
                 finally { if (Directory.Exists(staged)) Directory.Delete(staged, true); }
             }
-            if (!File.Exists(Path.Combine(installPath, "desktop", "ModelRelay.exe")))
+            if (!File.Exists(Path.Combine(installPath, "desktop", "MuxDeck.exe")))
                 throw new IOException("The app installation is incomplete.");
             return installPath;
         }
