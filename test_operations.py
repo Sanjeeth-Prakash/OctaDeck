@@ -1,9 +1,11 @@
 import tempfile
 import unittest
 from time import time
+from unittest.mock import patch
 
 import httpx
 
+import app
 from analytics import report
 from health import probe_provider
 from routing import execute
@@ -15,6 +17,19 @@ class OperationsTests(unittest.TestCase):
         folder = tempfile.TemporaryDirectory()
         self.addCleanup(folder.cleanup)
         self.store = Store(folder.name)
+
+    def test_health_check_allows_time_for_local_model_loading(self):
+        for base, expected in (
+            ("http://127.0.0.1:11434/v1", 60),
+            ("http://localhost:11434/v1", 60),
+            ("http://[::1]:11434/v1", 60),
+            ("https://example.org/v1", 15),
+        ):
+            with self.subTest(base=base), patch("app.probe_provider"), patch("app.httpx.Client") as client:
+                app.run_probe({"base": base})
+                timeout = client.call_args.kwargs["timeout"]
+                self.assertEqual(timeout.read, expected)
+                self.assertEqual(timeout.connect, 5)
 
     def test_probe_models_and_preserves_safe_status(self):
         provider = self.store.add("Example", "https://example.org/v1", "exact-model", "fast", "dummy-key")

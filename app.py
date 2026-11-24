@@ -111,7 +111,10 @@ def provider_models(item: ModelDiscovery):
             raise HTTPException(error.status, str(error)) from error
 
 def run_probe(provider):
-    with httpx.Client(timeout=httpx.Timeout(15,connect=5),follow_redirects=False,trust_env=False) as client:
+    host = urlsplit(provider["base"]).hostname
+    # The first local request may wait for the model weights to load.
+    timeout = 60 if host in ("localhost", "127.0.0.1", "::1") else 15
+    with httpx.Client(timeout=httpx.Timeout(timeout, connect=5), follow_redirects=False, trust_env=False) as client:
         return probe_provider(db,client,provider)
 
 @app.post("/admin/providers",dependencies=[Depends(admin)])
