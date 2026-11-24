@@ -58,7 +58,7 @@ section[id] { scroll-margin-top: 26px; }
   background:
     linear-gradient(0deg, var(--bg), transparent 34%),
     linear-gradient(90deg, #090b0de8 0%, #0b0d1061 49%, #0b0d1008 80%),
-    #111718 url("assets/night-crossing.webp") center 44% / cover no-repeat;
+    #111718 url("assets/model-routing.webp") center 44% / cover no-repeat;
 }
 .eyebrow {
   display: flex; align-items: center; gap: 10px; color: var(--accent);
@@ -152,8 +152,8 @@ code { font: .875rem/1.55 Consolas, "Courier New", monospace; color: #e2c095; }
     background-image:
       linear-gradient(0deg, var(--bg), transparent 36%),
       linear-gradient(90deg, #090b0dee 0%, #0b0d1099 67%, #0b0d1055 100%),
-      url("assets/night-crossing.webp");
-    background-position: center, center, 64% center;
+      url("assets/model-routing.webp");
+    background-position: center, center, 80% center;
   }
   .hero h1 { margin-top: 17px; font-size: clamp(3.1rem, 13vw, 4.7rem); }
   .hero p { font-size: 1rem; }

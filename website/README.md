@@ -14,12 +14,12 @@ Open http://127.0.0.1:8530. The Windows button links to the current OctaDeck rel
 
 The screenshot tabs show the installed app. The PowerShell example uses the local gateway on port 8520 and needs a gateway key from your own running instance. The landing page itself can be served by any static host.
 
-The [backdrop](dist/assets/night-crossing.webp) was made with built-in image generation and compressed to WebP.
+The [model-routing backdrop](dist/assets/model-routing.webp) was made with built-in image generation and compressed to WebP.
 
 <details>
 <summary>Backdrop prompt</summary>
 
-> Create a 16:9 widescreen cinematic maritime background for a desktop AI app landing page. Photorealistic low-key film still of a weathered black three-masted sailing ship from the age of sail, under outstretched dark tattered canvas, cutting through moody North Atlantic waves at night. Ship is small to medium and entirely within the right two-fifths of the frame, with a warm, muted copper glow breaking through heavy clouds in the right sky behind the rigging. The left 55 percent is very dark mostly empty blue-black mist with faint cloud and water texture, usable behind large white website copy. Black slate sea, subtle film grain, soft depth, elegant gritty pirate atmosphere. Horizon below center. Palette is charcoal navy, desaturated steel blue and a hint of warm amber on the right. Dark overall, preserve readably silhouetted rigging on the right. No text, no logos, no visible symbols, no people, no typography, no borders, no interface. This is background art, not a website mockup.
+> Create a wide 16:9 cinematic landing-page backdrop for OctaDeck, a desktop LLM gateway. A compact graphite AI processor routes packets along fine amber-lit circuit paths to smaller model nodes on a dark motherboard. Render a believable macro product photograph with subtle copper traces and charcoal-blue metal. Place all bright detail in the right half, with the processor centered at roughly 73% width and 40% height. Leave the left 55% nearly black, quiet, and spacious for white website copy. Let the lower edge fade into black. Keep the image restrained and crisp, with only a handful of warm highlights. No text, logos, people, or maritime imagery.
 
 </details>
 
