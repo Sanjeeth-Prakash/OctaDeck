@@ -2,11 +2,11 @@
 
 A local model gateway for people who use several LLM APIs. Connect provider models, give your apps one bearer key, and inspect the route each request took. The Tasks tab also runs a bounded planning and review workflow for demanding text requests.
 
-[Download OctaDeck for Windows](https://github.com/Sanjeeth-Prakash/OctaDeck/releases/latest)
+[Visit the OctaDeck website](https://sanjeeth-prakash.github.io/OctaDeck/) · [Download OctaDeck for Windows](https://github.com/Sanjeeth-Prakash/OctaDeck/releases/latest)
 
 The dashboard keeps Models, Playground, Voice, Media, Tasks, Providers, and Analytics in a sidebar on desktop and compact navigation on smaller screens. The Models and Providers tables surface local usage and connection health.
 
-The [product landing page](website/README.md) includes an app preview, a PowerShell API example, and installer links.
+The website includes an app preview, a PowerShell API example, and installer links. See the [landing-page source and local preview instructions](website/README.md).
 
 ## Local model studio
 

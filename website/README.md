@@ -1,6 +1,6 @@
 # OctaDeck landing page
 
-The static site in `dist/` contains all its assets and needs no Node dependencies or build step.
+The static site in `dist/` contains all its assets and needs no Node dependencies or build step. GitHub Actions publishes that directory to [GitHub Pages](https://sanjeeth-prakash.github.io/OctaDeck/) when the website changes on `main`.
 
 ![OctaDeck landing page with the Windows download and desktop app preview](../docs/landing.png)
 
