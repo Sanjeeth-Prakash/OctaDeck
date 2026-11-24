@@ -94,6 +94,58 @@ tr:last-child td, tr:last-child th[scope=row] { border-bottom: 0; }
 #voiceForm { margin-top: 16px; }
 #voiceAudio { width: 100%; margin-bottom: 12px; }
 
+main:has(#playground:not([hidden])) { display:flex; flex-direction:column; height:100dvh; padding:0; }
+main:has(#playground:not([hidden])) > #notice { margin:10px 20px 0; }
+#playground { --chat-width:760px; display:flex; flex:1; flex-direction:column; min-height:0; }
+.chat-header { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:14px clamp(14px,3vw,30px); border-bottom:1px solid var(--line); }
+.chat-header h1 { font-size:19px; margin:0; letter-spacing:-.035em; }
+.chat-header-tools { display:flex; align-items:center; gap:8px; min-width:0; }
+.chat-header select, .chat-composer select { margin:0; width:auto; max-width:100%; min-height:34px; padding:5px 9px; }
+.chat-header select { width:195px; }
+#conversation { flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; }
+.chat-content { width:min(calc(100% - 36px),var(--chat-width)); margin:auto; padding:24px 0; display:flex; flex-direction:column; min-height:100%; }
+.chat-empty { margin:auto; padding:14px 8px; text-align:center; }
+.chat-empty img { width:44px; height:44px; border-radius:11px; }
+.chat-empty h2 { margin:10px 0 5px; font-size:23px; }
+.chat-empty p { margin:0; }
+#thread { display:grid; grid-template-columns:minmax(0,1fr); gap:22px; }
+.chat-message { max-width:100%; min-width:0; }
+.chat-message[data-role=user] { justify-self:end; max-width:min(85%,600px); }
+.chat-message[data-role=assistant] { padding-left:36px; position:relative; }
+.chat-avatar { position:absolute; left:0; top:0; width:26px; height:26px; border-radius:6px; }
+.chat-author { display:block; margin:0 0 6px; color:var(--muted); font-size:12px; font-weight:600; }
+.chat-message[data-role=user] .chat-author { text-align:right; }
+.chat-message[data-role=user] .chat-text { padding:9px 13px; background:#292d3a; border:1px solid #3d4356; border-radius:13px 13px 4px 13px; }
+.chat-text { white-space:pre-wrap; overflow-wrap:anywhere; font-size:14px; line-height:1.65; }
+.chat-text code { background:var(--field); color:var(--accent); border-radius:4px; padding:1px 4px; }
+.chat-message-actions { display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:6px; }
+.chat-quiet { min-height:29px; padding:3px 8px; font-size:12px; color:var(--muted); background:transparent; }
+.chat-quiet:hover { color:var(--ink); background:#27292d; }
+.chat-code { margin:10px 0; border:1px solid var(--line); border-radius:9px; overflow:hidden; background:var(--field); }
+.chat-code figcaption { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:3px 8px 3px 12px; border-bottom:1px solid var(--line); color:var(--muted); font-size:12px; }
+.chat-code pre { margin:0; border:0; border-radius:0; white-space:pre; overflow:auto; }
+.chat-pending { margin:20px 0 0; padding-left:36px; color:var(--muted); }
+.chat-pending .status-dot { background:var(--accent); margin-right:7px; }
+.chat-message[data-state=error] .chat-text { color:var(--warn); }
+.chat-dock { padding:0 18px 12px; flex:none; }
+.chat-composer { max-width:var(--chat-width); margin:auto; padding:7px; border:1px solid var(--line); background:var(--panel); border-radius:13px; }
+.chat-composer:focus-within { border-color:#68718d; }
+.chat-composer textarea { display:block; margin:0; width:100%; border:0; background:transparent; min-height:44px; max-height:132px; padding:9px; resize:none; }
+.chat-composer textarea:focus-visible { outline:none; }
+.chat-toolbar { display:flex; align-items:center; flex-wrap:wrap; gap:6px; padding:3px; }
+.chat-toolbar #sendChat { margin-left:auto; }
+.chat-attachments { position:relative; margin:0; padding:0; border:0; background:none; }
+.chat-attachments summary { display:block; list-style:none; white-space:nowrap; padding:5px 8px; border-radius:7px; color:var(--muted); font-size:13px; }
+.chat-attachments summary::-webkit-details-marker { display:none; }
+.chat-attachments[open] summary { margin:0; padding:5px 8px; border:0; background:#292c32; color:var(--ink); }
+.attachment-menu { position:absolute; bottom:calc(100% + 9px); z-index:3; left:0; width:min(310px,calc(100vw - 52px)); padding:12px; border:1px solid var(--line); border-radius:8px; background:#22242a; box-shadow:0 10px 28px #0006; }
+.attachment-menu input { margin-bottom:8px; padding:5px; min-width:0; }
+.attachment-menu small { display:block; margin-top:8px; }
+.chat-toolbar #editTarget { max-width:min(175px,45vw); font-size:12px; }
+#fileList:not(:empty) { padding:3px 3px 4px; }
+#fileList button { font-size:12px; min-height:28px; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
+.chat-hint { display:block; text-align:center; margin:5px 0 0; min-height:15px; font-size:11px; }
+
 @media (max-width: 720px) {
   .workspace { display:block; }
   .topbar { position:static; height:auto; border-right:0; border-bottom:1px solid var(--line); padding:12px 12px 6px; }
@@ -102,6 +154,13 @@ tr:last-child td, tr:last-child th[scope=row] { border-bottom: 0; }
   main { padding:22px 16px 40px; }
   .stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .grid, .model-tools { grid-template-columns:1fr; }
+  .workspace:has(#playground:not([hidden])) { display:flex; flex-direction:column; height:100dvh; min-height:0; }
+  main:has(#playground:not([hidden])) { height:auto; flex:1; min-height:0; }
+  .chat-header { padding:8px 12px; }
+  .chat-header-tools { flex-wrap:wrap; }
+  .chat-header select { width:147px; }
+  .chat-content { width:calc(100% - 24px); padding:16px 0; }
+  .chat-dock { padding:0 12px 6px; }
 }
 .health { display:block; font-weight:600; }
 .health[data-state=healthy] { color:var(--accent); }
@@ -168,7 +227,7 @@ h2 { font-size:15px; }
 #providerList .provider-actions button { border-radius:6px; }
 #analytics .filters { padding:0 0 13px; border-width:0 0 1px; border-radius:0; }
 #analytics .stat { background:#202125; }
-#thread article, #outputPanel, #voiceResult { background:#202125; }
+#outputPanel, #voiceResult { background:#202125; }
 </style></head><body><div class="workspace">
 <header class="topbar">
 <div class="brand"><img class="brand-symbol" src="/assets/octadeck-mark.png" width="26" height="26" alt=""><strong>OctaDeck</strong></div>
@@ -222,19 +281,49 @@ h2 { font-size:15px; }
 <p id="job" role="status"></p><small>Model downloads can use several gigabytes of disk space.</small></div>
 <div class="panel"><h2>Search Hugging Face</h2><p>Find public GGUF text models and open their model cards.</p><form id="searchForm"><label>Model name<input id="searchQuery" minlength="2" maxlength="100" required placeholder="e.g. Qwen Coder"></label><button>Search catalog</button></form><div id="searchResults" aria-live="polite"></div></div>
 </div></details></section>
-<section id="playground" hidden><h1>Coding playground</h1><p>Ask about your files or review a proposed edit. File contents stay with the selected local model.</p>
-<div class="panel"><div class="grid"><label>Local model<select id="chatModel"></select></label><label>Import text or code files<input type="file" id="files" multiple></label></div><div id="fileList"></div>
-<small>Up to 12 UTF-8 files, 40,000 characters in total. Files and conversation history stay in this browser tab during the session.</small></div>
-<div id="thread"></div><form class="panel" id="chatForm"><label>Message<textarea id="question" required placeholder="Explain how these files work together."></textarea></label>
-<div class="row"><label>Output<select id="editTarget"><option value="">Answer question</option></select></label><button id="sendChat">Send</button></div></form>
-<div id="proposal" class="panel" hidden><h2>Review suggested file</h2><div class="grid"><label>Original<textarea id="before" readonly></textarea></label><label>Suggested replacement<textarea id="after"></textarea></label></div><button id="saveFile">Accept and download file</button> <button class="secondary" id="discard">Discard</button></div>
-<div class="row"><button id="chatTrace" hidden class="secondary">View request trace</button><button id="prepareHandoff" hidden class="secondary">Prepare handoff</button><button class="secondary" id="resetChat">Clear conversation</button></div>
-<div class="panel" id="handoffPanel" hidden>
-<h2>Agent handoff</h2><p>Review what will be sent to your local Agent Handoff app. The transcript includes conversation text and filenames. Check it for code or secrets quoted in chat.</p>
-<label>Transcript<textarea id="handoffTranscript" maxlength="12000"></textarea></label>
-<div class="row"><button id="generateHandoff">Generate brief</button><small id="handoffStatus" role="status"></small></div>
-<div id="handoffPreview" hidden><label>Handoff brief<textarea id="handoffMarkdown"></textarea></label><button id="downloadHandoff" class="secondary">Download HANDOFF.md</button></div>
-</div></section>
+<section id="playground" aria-labelledby="chatHeading" hidden>
+<header class="chat-header">
+  <h1 id="chatHeading">Playground</h1>
+  <div class="chat-header-tools">
+    <select id="chatModel" aria-label="Local model"></select>
+    <button id="prepareHandoff" class="chat-quiet" hidden>Prepare handoff</button>
+    <button id="resetChat" class="secondary">New chat</button>
+  </div>
+</header>
+<div id="conversation">
+  <div class="chat-content">
+    <div id="chatEmpty" class="chat-empty"><img src="/assets/octadeck-mark.png" alt=""><h2>Start a conversation</h2><p>Ask your local model a question or attach a file to work on.</p></div>
+    <div id="thread" role="log" aria-label="Conversation"></div>
+    <p id="chatPending" class="chat-pending" role="status" hidden><span class="status-dot" aria-hidden="true"></span><span id="chatPendingText"></span></p>
+    <div id="proposal" class="panel" hidden><h2>Review suggested file</h2><div class="grid"><label>Original<textarea id="before" readonly></textarea></label><label>Suggested replacement<textarea id="after"></textarea></label></div><button id="saveFile">Accept and download file</button> <button class="secondary" id="discard">Discard</button></div>
+    <div class="panel" id="handoffPanel" hidden>
+      <h2>Agent handoff</h2><p>Review what will be sent to your local ThreadBrief app. The transcript includes conversation text and filenames.</p>
+      <label>Transcript<textarea id="handoffTranscript" maxlength="12000"></textarea></label>
+      <div class="row"><button id="generateHandoff">Generate brief</button><small id="handoffStatus" role="status"></small></div>
+      <div id="handoffPreview" hidden><label>Handoff brief<textarea id="handoffMarkdown"></textarea></label><button id="downloadHandoff" class="secondary">Download HANDOFF.md</button></div>
+    </div>
+  </div>
+</div>
+<div class="chat-dock">
+  <form class="chat-composer" id="chatForm">
+    <div id="fileList"></div>
+    <textarea id="question" aria-label="Message" required rows="1" maxlength="48000" placeholder="Message your local model"></textarea>
+    <div class="chat-toolbar">
+      <details id="attachmentPicker" class="chat-attachments">
+        <summary>Attach files</summary>
+        <div class="attachment-menu">
+          <label>Import text or code files<input id="files" type="file" multiple></label>
+          <button type="button" class="secondary" id="openDisk">Open editable files</button>
+          <small>Up to 12 UTF-8 files, 40,000 characters total. Removing an attachment clears the chat.</small>
+        </div>
+      </details>
+      <select id="editTarget" aria-label="Output" hidden><option value="">Answer question</option></select>
+      <button id="sendChat">Send</button>
+    </div>
+  </form>
+  <small id="chatHint" class="chat-hint">Enter to send · Shift+Enter for a new line</small>
+</div>
+</section>
 <section id="tasks"><h1>Run a task</h1><p>Send a text task to your model pool. Automatic routing selects a tier from the prompt.</p>
 <form class="panel" id="taskForm"><label>Task<textarea required id="prompt" placeholder="Compare two approaches to storing a conversation history."></textarea></label>
 <div class="row"><label>Routing<select id="tier"><option>auto</option><option>fast</option><option>balanced</option><option>strong</option></select></label><button id="run">Run task</button></div>

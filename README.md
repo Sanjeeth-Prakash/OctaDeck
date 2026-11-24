@@ -22,7 +22,11 @@ Live compatibility checks passed on Llama 3.1, Qwen2.5-Coder 1.5B, and Granite 3
 
 The inventory shows each local model's last seven days of recorded model calls, including success rate and median call latency. The dotted indicator represents the observed success rate. Models without calls display **No data**. The interface bundles the Latin Inter variable font under the [SIL Open Font License](assets/Inter-OFL.txt).
 
-**Playground** lets you import UTF-8 source files and talk to a pinned local model. Select a file under **Output** to request a complete replacement. Python and JSON proposals receive a syntax check and one repair attempt if needed. Review the original and suggestion, edit the result, then download it. On browsers supporting the File System Access API, **Open editable files** also enables saving an approved replacement to its original file with a change-on-disk check. The playground has a 12-file, 40,000-character input limit. Its scope is conversation and reviewed file changes; it does not run shell commands, install project dependencies or execute the imported code.
+**Playground** is a session chat with a pinned local model. Press **Enter** to send or **Shift+Enter** for a new line. You can copy fenced code or open a request trace from the reply that produced it. Use **New chat** to clear the conversation.
+
+![OctaDeck Playground with a local Python conversation, copyable code, and a composer at the bottom](docs/chat.png)
+
+Use **Attach files** to add UTF-8 source files, up to 12 files and 40,000 characters in total. Select a file under **Output** to ask for a complete replacement. Python and JSON proposals receive a syntax check and one repair attempt if needed. Review the original and the suggestion, edit the result, and download it. On supported browsers, **Open editable files** also lets you save an approved replacement to its original file after checking for changes on disk. The playground works with text and reviewed file edits. Run project commands and tests separately.
 
 The playground server owns the assistant instructions and treats imported text as untrusted context. It validates the proposed file and checks the reviewed version again before saving or downloading. The request trace shows generation, validation, and any repair attempt. These checks cover completeness signals, size, text format, and Python or JSON syntax. Review behavior and run your project's tests separately.
 
@@ -62,7 +66,7 @@ The product hypothesis to test is whether users can go from finding a local mode
 
 Download **OctaDeck-Setup-x64.exe** from the latest Windows release, choose an installation directory, and open **OctaDeck.lnk**. When upgrading, select the existing application folder to keep its providers, settings, and analytics. The unsigned setup bundles Python and the app. Windows supplies WebView2 and .NET Framework. Cloud connections work directly with provider keys. Install Ollama separately if you want to run and download models locally. [Latest Windows release](https://github.com/Sanjeeth-Prakash/OctaDeck/releases/latest)
 
-Archived releases used the earlier Model Relay and MuxDeck names. The Playground, Voice, and handoff walkthrough images show earlier Windows builds. [Release archive](https://github.com/Sanjeeth-Prakash/OctaDeck/releases)
+Archived releases used the earlier Model Relay and MuxDeck names. The file review, Voice, and handoff screenshots show earlier Windows builds. [Release archive](https://github.com/Sanjeeth-Prakash/OctaDeck/releases)
 
 To build the same type of installer from source, run `python build-release.py --output <build-directory>` on x64 Windows with Python, pip and .NET Framework available.
 

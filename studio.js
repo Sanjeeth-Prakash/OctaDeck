@@ -1,6 +1,10 @@
 const sources = new Map();
 const handles = new Map();
 let history = [], handoffEvents = [], pendingFile = "", timer, loadingModels = false;
+let sendingChat = false, importingFiles = false;
+const composer = el("question");
+const conversation = el("conversation");
+const keyboardHint = el("chatHint").textContent;
 const starterModels = ["smollm2:135m","qwen2.5-coder:1.5b","granite3.3:2b","llama3.2:3b"];
 
 function showJob(job) {
@@ -116,7 +120,13 @@ async function localList() {
         select.add(new Option(m.name,m.name));
         const use=node("button","Open in playground");
         use.className="secondary";
-        use.onclick=()=>{select.value=m.name; clearHistory();tab("playground");};
+        use.onclick=()=>{
+          if (!sendingChat && !importingFiles) {
+            select.value=m.name;
+            clearHistory();
+          }
+          tab("playground");
+        };
         action.append(use);
       }
     }
@@ -130,22 +140,56 @@ async function localList() {
     if(!select.options.length) select.add(new Option("Install a chat model first",""));
   } finally { loadingModels=false; }
 }
+function resizeComposer() {
+  composer.style.height = "auto";
+  composer.style.height = composer.scrollHeight + "px";
+}
+composer.addEventListener("input", resizeComposer);
+composer.addEventListener("keydown", event => {
+  if (event.key !== "Enter" || event.shiftKey || event.isComposing || event.keyCode === 229) return;
+  event.preventDefault();
+  if (!sendingChat && composer.value.trim()) el("chatForm").requestSubmit();
+});
+
+function scrollConversation() {
+  conversation.scrollTop = conversation.scrollHeight;
+}
+
 function clearHistory(resetHandoff = true) {
   if (resetHandoff === true) {
     handoffEvents = [];
     el("prepareHandoff").hidden = true;
     el("handoffPanel").hidden = true;
   }
-  history=[];pendingFile="";el("thread").replaceChildren();el("proposal").hidden=true;el("chatTrace").hidden=true;
+  history = [];
+  pendingFile = "";
+  el("thread").replaceChildren();
+  el("chatEmpty").hidden = false;
+  el("proposal").hidden = true;
+  el("chatHint").textContent = keyboardHint;
+  composer.value = "";
+  resizeComposer();
 }
 function renderFiles() {
   const list=el("fileList"), select=el("editTarget"); list.replaceChildren();select.replaceChildren(new Option("Answer question",""));
+  select.hidden = !sources.size;
   for(const [name] of sources) {
-    select.add(new Option("Edit "+name,name)); const b=node("button","Remove "+name);b.className="secondary";
-    b.onclick=()=>{sources.delete(name);handles.delete(name);clearHistory();renderFiles();};list.append(b);
+    select.add(new Option("Edit "+name,name));
+    const b = node("button", name + " ×");
+    b.type = "button";
+    b.className = "secondary";
+    b.title = name;
+    b.setAttribute("aria-label", "Remove " + name);
+    b.onclick=()=>{
+      if (sendingChat || importingFiles) return;
+      sources.delete(name);handles.delete(name);clearHistory();renderFiles();
+    };
+    list.append(b);
   }
 }
 async function importFiles(files, pickedHandles = []) {
+  if (sendingChat || importingFiles || !files.length) return;
+  importingFiles = true;
   try {
     const merged=new Map(sources);
     for(const f of files) {
@@ -158,12 +202,17 @@ async function importFiles(files, pickedHandles = []) {
     if(merged.size>12 || Array.from(merged.values()).reduce((n,v)=>n+v.length,0)>40000) throw Error("Reduce the selected files to fit the import limit.");
     for(const [name,value] of merged)sources.set(name,value);
     for(const handle of pickedHandles)handles.set(handle.name,handle);
-    clearHistory();renderFiles();el("notice").textContent="";
-  } catch(err){problem(err)} finally {el("files").value=""}
+    renderFiles();el("notice").textContent="";
+    el("attachmentPicker").open = false;
+    if (!el("playground").hidden) composer.focus({preventScroll:true});
+  } catch(err){problem(err)}
+  finally {
+    el("files").value = "";
+    importingFiles = false;
+  }
 };
 el("files").onchange=e=>importFiles(Array.from(e.target.files));
-const openDisk=node("button","Open editable files");
-openDisk.type="button";openDisk.className="secondary";el("files").parentElement.after(openDisk);
+const openDisk=el("openDisk");
 openDisk.hidden=!window.showOpenFilePicker;
 openDisk.onclick=async()=>{
   try {
@@ -208,7 +257,11 @@ applyDisk.onclick=()=>approveDraft(async (name,content)=>{
   rememberHandoff("Tool", "The user approved and saved the replacement to "+name+". Project tests were not run.");
   clearHistory(false);renderFiles();
 });
-el("chatModel").onchange=()=>clearHistory();el("resetChat").onclick=()=>clearHistory();
+el("chatModel").onchange=()=>clearHistory();
+el("resetChat").onclick=()=>{
+  clearHistory();
+  composer.focus({preventScroll:true});
+};
 el("discard").onclick=()=>{
   if (pendingFile) rememberHandoff("Tool","The user discarded the proposed replacement for "+pendingFile+".");
   pendingFile="";el("proposal").hidden=true;
@@ -218,22 +271,136 @@ el("saveFile").onclick=()=>approveDraft((name,text)=>{
   const a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   rememberHandoff("Tool","The user requested download of the reviewed replacement for "+name+". Project tests were not run.");
 });
-let playgroundRun="";
-el("chatTrace").onclick=()=>{wantedTrace=playgroundRun;tab("analytics")};
+function copyChatButton(label, text) {
+  const button = node("button", label);
+  button.className = "chat-quiet";
+  button.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      button.textContent = "Copied";
+      setTimeout(() => button.textContent = label, 1400);
+    } catch (error) { problem(error); }
+  };
+  return button;
+}
+
+function appendChatText(container, text) {
+  text = text.trim();
+  if (!text) return;
+  const lines = node("div", "");
+  lines.className = "chat-text";
+  const tokens = text.split(/(`[^`\n]+`|\*\*[^*\n]+\*\*)/g);
+  tokens.forEach((token, index) => {
+    if (index % 2 === 0) lines.append(token);
+    else if (token.startsWith("`")) lines.append(node("code", token.slice(1, -1)));
+    else lines.append(node("strong", token.slice(2, -2)));
+  });
+  container.append(lines);
+}
+
+function appendReply(container, text) {
+  const fenced = /^```([\w.+#-]*)[ \t]*\r?\n([\s\S]*?)^```[ \t]*\r?$(?:\n)?/gm;
+  let start = 0;
+  for (const match of text.matchAll(fenced)) {
+    appendChatText(container, text.slice(start, match.index));
+    const [, language, code] = match;
+    const block = node("figure", "");
+    block.className = "chat-code";
+    const caption = node("figcaption", "");
+    caption.append(node("span", language || "Code"), copyChatButton("Copy code", code));
+    const pre = node("pre", "");
+    pre.append(node("code", code));
+    block.append(caption, pre);
+    container.append(block);
+    start = match.index + match[0].length;
+  }
+  appendChatText(container, text.slice(start));
+}
+
+function appendMessage(role, text, {model, run, error, review} = {}) {
+  const message = node("article", "");
+  message.className = "chat-message";
+  message.dataset.role = role;
+  if (error) message.dataset.state = "error";
+  const author = node("span", role === "user" ? "You" : model);
+  author.className = "chat-author";
+  message.append(author);
+  if (role === "assistant") {
+    const icon = document.createElement("img");
+    icon.src = "/assets/octadeck-mark.png";
+    icon.alt = "";
+    icon.className = "chat-avatar";
+    message.prepend(icon);
+  }
+  if (role === "assistant" && !error && !review) appendReply(message, text);
+  else {
+    const body = node("div", text);
+    body.className = "chat-text";
+    message.append(body);
+  }
+  if (role === "assistant") {
+    const actions = node("div", "");
+    actions.className = "chat-message-actions";
+    if (!error && !review) actions.append(copyChatButton("Copy reply", text));
+    if (run) {
+      const trace = node("button", "View request trace");
+      trace.className = "chat-quiet";
+      trace.onclick = () => { wantedTrace = run; tab("analytics"); };
+      actions.append(trace);
+    }
+    if (actions.childElementCount) message.append(actions);
+  }
+  el("chatEmpty").hidden = true;
+  el("thread").append(message);
+}
+
+function chatMessages(question, target) {
+  const attachments = Array.from(sources, ([name, content]) => ({
+    role: "user", content: "Imported file " + JSON.stringify(name) + "\n" + content
+  }));
+  const request = {
+    role: "user",
+    content: question + (target ? "\nReturn only the complete replacement text for " + JSON.stringify(target) + ", without Markdown fences." : "")
+  };
+  const recent = [];
+  let chars = attachments.reduce((sum, file) => sum + file.content.length, request.content.length);
+  for (let i = history.length - 2; i >= 0; i -= 2) {
+    const user = history[i], reply = history[i+1];
+    chars += user.content.length + reply.content.length;
+    if (chars > 96000 || attachments.length + recent.length + 3 > 99) break;
+    recent.unshift(user, reply);
+  }
+  el("chatHint").textContent = recent.length < history.length
+    ? "This request uses the most recent turns to fit the gateway limit."
+    : keyboardHint;
+  return [...attachments, ...recent, request];
+}
+
 el("chatForm").onsubmit=async e=>{
   e.preventDefault();
-  const model=el("chatModel").value,question=el("question").value.trim(),target=el("editTarget").value;
+  if (sendingChat || importingFiles) return;
+  const model=el("chatModel").value,question=composer.value.trim(),target=el("editTarget").value;
   if(!model || !question){problem(Error("Select a local model and enter a message."));return}
+  sendingChat = true;
   rememberHandoff("User",question);
-  const controls=el("playground").querySelectorAll("button,select,input,textarea");
+  const controls = [...el("playground").querySelectorAll("button,select,input,textarea")]
+    .filter(control => control !== composer && !control.disabled);
   controls.forEach(c=>c.disabled=true);
-  el("sendChat").textContent="Running…";el("notice").textContent="";el("proposal").hidden=true;pendingFile="";
-  const messages=[];
-  for(const [name,content] of sources)messages.push({role:"user",content:"Imported file "+JSON.stringify(name)+"\n"+content});
-  messages.push(...history,{role:"user",content:question+(target?"\nReturn only the complete replacement text for "+JSON.stringify(target)+", without Markdown fences.":"")});
+  el("notice").textContent="";
+  el("attachmentPicker").open = false;
+  el("proposal").hidden=true;
+  pendingFile="";
+  composer.value = "";
+  composer.readOnly = true;
+  resizeComposer();
+  appendMessage("user", question);
+  el("chatPendingText").textContent = model + " is responding…";
+  el("chatPending").hidden = false;
+  scrollConversation();
   try{
-    const {data,run}=await api("/admin/playground","POST",{model:"local/"+model,messages,edit_file:target||null,max_tokens:target?4096:1024});
-    playgroundRun=run;el("chatTrace").hidden=false;
+    const {data,run}=await api("/admin/playground","POST",{
+      model:"local/"+model, messages:chatMessages(question,target), edit_file:target||null, max_tokens:target?4096:1024
+    });
     const choice=data.choices[0],answer=choice.message.content;
     if (target) {
       rememberHandoff("Tool", "The playground generated a proposed replacement for "+target+
@@ -242,19 +409,31 @@ el("chatForm").onsubmit=async e=>{
       rememberHandoff("Assistant",answer);
     }
     history.push({role:"user",content:question},{role:"assistant",content:answer});
-    const card=node("article","");card.className="panel";card.append(node("h2",question));
+    const follow = conversation.scrollHeight - conversation.clientHeight - conversation.scrollTop < 80;
+    el("chatPending").hidden = true;
     if(target && choice.finish_reason==="stop"){
       applyDisk.hidden=!handles.has(target);
       pendingFile=target;el("before").value=sources.get(target);el("after").value=answer.replace(/^```[^\n]*\n([\s\S]*?)\n```\s*$/,"$1");el("proposal").hidden=false;
-      card.append(node("p",data.file_check+". Review the proposed change to "+target+" below."));
-    }else{card.append(node("pre",answer));if(target)card.append(node("p","Incomplete generation. File export is disabled for this response."));}
-    el("thread").append(card);el("question").value="";
+      appendMessage("assistant", data.file_check + ". Review the proposed change to " + target + " below.", {model,run,review:true});
+    } else {
+      const text = target ? answer + "\n\nIncomplete generation. File export is disabled for this response." : answer;
+      appendMessage("assistant", text, {model,run});
+    }
+    if (follow) scrollConversation();
   }catch(err){
-    problem(err);
+    el("chatPending").hidden = true;
+    appendMessage("assistant", err.message, {model,run:err.run,error:true});
+    composer.value = question;
+    resizeComposer();
+    scrollConversation();
     rememberHandoff("Tool","The playground request failed."+ (err.run ? " Request "+err.run+"." : ""));
-    if(err.run){playgroundRun=err.run;el("chatTrace").hidden=false}
   }
-  finally{controls.forEach(c=>c.disabled=false);el("sendChat").textContent="Send";}
+  finally{
+    controls.forEach(c=>c.disabled=false);
+    composer.readOnly = false;
+    sendingChat = false;
+    if (!el("playground").hidden && document.activeElement === document.body) composer.focus({preventScroll:true});
+  }
 };
 function rememberHandoff(role,message) {
   const clean = message.replace(/\s+/g," ").slice(0,3000);
@@ -291,7 +470,7 @@ el("generateHandoff").onclick = async () => {
   const status = el("handoffStatus");
   button.disabled = true;
   el("handoffPreview").hidden = true;
-  status.textContent = "Generating with local Agent Handoff…";
+  status.textContent = "Generating with local ThreadBrief…";
   try {
     const {data} = await api("/admin/playground/handoff","POST",{transcript});
     if (el("handoffPanel").hidden || transcript !== el("handoffTranscript").value.trim()) {
